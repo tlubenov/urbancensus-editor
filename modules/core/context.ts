@@ -22,6 +22,9 @@ import { ApiError } from '../util/error';
 import type { coreGraph } from '.';
 import type { Vec2 } from '../geo/vector';
 
+// ugr: editing waits for the rules configuration
+import { ugrRulesReady } from '../ugr/rules/store';
+
 type Theme = 'light' | 'dark';
 
 type EventMap = {
@@ -550,6 +553,8 @@ export function coreContext(this: object): coreContext {
   context.editableDataEnabled = () => _map.editableDataEnabled();
   context.surfaceRect = () => _map.surface.node().getBoundingClientRect();
   context.editable = () => {
+    // ugr: no editing until the rules configuration has loaded (fail closed)
+    if (!ugrRulesReady()) return false;
     // don't allow editing during save
     const mode = context.mode();
     if (!mode || mode.id === 'save') return false;

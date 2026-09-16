@@ -2307,3 +2307,6 @@ en:
   ugr:
     locked:
       tooltip: Cadastre feature – read-only
+    rules:
+      not_loaded: Rules not loaded – try again
+      retry: Try again

@@ -48,6 +48,9 @@ import { uiPaneIssues } from './panes/issues';
 import { uiPaneMapData } from './panes/map_data';
 import { uiPanePreferences } from './panes/preferences';
 
+// ugr: load the rules configuration at start-up
+import { ugrStartRules } from '../ugr/rules/start';
+
 export function uiInit(context) {
     var _initCounter = 0;
     var _needWidth = {};
@@ -439,6 +442,9 @@ export function uiInit(context) {
         context.enter(modeBrowse(context));
 
         if (!_initCounter++) {
+            // ugr: load the rules configuration; editing stays off until it loads
+            ugrStartRules(context);
+
             if (!ui.hash.startWalkthrough) {
                 context.container()
                     .call(uiSplash(context))

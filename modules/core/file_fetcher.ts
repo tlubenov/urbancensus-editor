@@ -50,6 +50,9 @@ interface Definitions {
   preset_presets: Presets;
   wmf_sitematrix: WmfSite[];
 
+  // ugr: rules configuration served by the Urban Green Register backend
+  ugr_rules: unknown;
+
   nsi_data: NsiJSON;
   nsi_dissolved: NsiDissolved;
   nsi_features: LocoFeatureCollection;
@@ -110,7 +113,9 @@ export function coreFileFetcher() {
     'preset_defaults': presetsCdnUrl + 'dist/preset_defaults.min.json',
     'preset_fields': presetsCdnUrl + 'dist/fields.min.json',
     'preset_presets': presetsCdnUrl + 'dist/presets.min.json',
-    'wmf_sitematrix': wmfSitematrixCdnUrl.replace('{version}', '0.2') + 'data/wikipedia.min.json'
+    'wmf_sitematrix': wmfSitematrixCdnUrl.replace('{version}', '0.2') + 'data/wikipedia.min.json',
+    // ugr: default location; the editor page points this at the backend's rules file
+    'ugr_rules': 'data/ugr_rules.min.json',
   };
 
   let _cachedData: { [T in FileId]?: Definitions[T] } = {};
