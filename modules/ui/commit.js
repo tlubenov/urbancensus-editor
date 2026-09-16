@@ -15,6 +15,8 @@ import { uiSectionRawTagEditor } from './sections/raw_tag_editor';
 import { utilArrayGroupBy, utilRebind, utilUniqueDomId } from '../util';
 import { utilDetect } from '../util/detect';
 import { getIncompatibleSources } from '../validations/incompatible_source';
+// ugr: deleting a locked feature can't be saved
+import { ugrLockedDeletions } from '../ugr/validations/locked_modified';
 
 
 var readOnlyTags = [
@@ -451,6 +453,9 @@ export function uiCommit(context) {
 
 
     function getUploadBlockerMessage() {
+        // ugr: the validator never sees deleted entities, so a locked feature deleted through any path blocks saving here
+        if (ugrLockedDeletions(context).length) return t.append('ugr.locked.deleted');
+
         // if there are too many edits to fit into a single changeset, then
         // prevent uploading.
         const changesetElements = context.history().changesCount();

@@ -1,7 +1,7 @@
 export { ugrBaseVersion, ugrRelease } from './release';
 export { ugrAboutCredits, ugrIssuesUrl, ugrRepositoryUrl, ugrWelcome } from './branding';
 export { ugrAnyLocked, ugrHasLockTag, ugrIsLocked, ugrLockKey, ugrStripTags } from './locking/is_locked';
-export { ugrAllowedTagChanges, ugrApplyFieldLocks, ugrFieldLocked, ugrReadOnlyKeysFor, ugrReadOnlyTagPatterns } from './locking/inspector';
+export { ugrActionPreserveProtectedTags, ugrAllowedTagChanges, ugrApplyFieldLocks, ugrApplyPresetChangeLock, ugrFieldLocked, ugrPreserveProtectedTags, ugrReadOnlyKeysFor, ugrReadOnlyTagPatterns } from './locking/inspector';
 export { ugrGuardOperation } from './locking/operations';
 export { ugrActionAttachToLocked, ugrCanAttachToLocked, ugrDragBlocked, ugrDrawTarget, ugrSnapNodes } from './locking/editing';
 export { ugrEvaluate, ugrMatchPreset, ugrPointInBoundary, ugrReadOnlyKeys } from './rules/evaluate';
@@ -10,4 +10,5 @@ export { ugrStartRules } from './rules/start';
 export { ugrFeatureFor } from './rules/feature';
 export { ugrDisabledValidations, ugrIsOwnRule, ugrValidationDisabled } from './validations/disabled';
 export { ugrUnknownValue } from './validations/rules';
+export { ugrLockedDeletions } from './validations/locked_modified';
 export { ugrKeptServices, ugrPruneServices } from './removals';

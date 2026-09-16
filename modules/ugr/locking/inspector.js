@@ -1,3 +1,5 @@
+import { deepEqual } from 'fast-equals';
+
 import { ugrReadOnlyKeys } from '../rules/evaluate';
 import { ugrFeatureFor } from '../rules/feature';
 import { ugrRules } from '../rules/store';
@@ -30,6 +32,46 @@ export function ugrFieldLocked(field, entityIDs, graph) {
     return [field.key].concat(field.keys || []).filter(Boolean).some(key => readOnly.includes(key));
 }
 
+// A copy of `after` in which ugr:* keys and `readOnly` keys are as in `before`: a key present before gets its value
+// back, a key absent before is removed.
+function restoreProtectedKeys(before, after, readOnly) {
+    const result = Object.assign({}, after);
+    const protectedKeys = new Set(readOnly);
+    Object.keys(before).concat(Object.keys(result))
+        .filter(key => key.startsWith('ugr:'))
+        .forEach(key => protectedKeys.add(key));
+    protectedKeys.forEach(key => {
+        if (key in before) result[key] = before[key];
+        else delete result[key];
+    });
+    return result;
+}
+
+// A change of feature type (actionChangePreset) may remove or add any key; ugr:* and read-only keys stay as they were.
+// `graph` is the graph before the change, where the read-only keys of `entityIDs` are looked up.
+export function ugrPreserveProtectedTags(beforeTags, afterTags, entityIDs, graph) {
+    return restoreProtectedKeys(beforeTags, afterTags, ugrReadOnlyKeysFor(entityIDs, graph));
+}
+
+// Wraps a tag-changing action on one entity (e.g. actionChangePreset) so that it keeps ugr:* and read-only keys.
+export function ugrActionPreserveProtectedTags(entityID, action) {
+    return function (graph) {
+        const before = graph.entity(entityID).tags;
+        const result = action(graph);
+        const entity = result.entity(entityID);
+        const tags = ugrPreserveProtectedTags(before, entity.tags, [entityID], graph);
+        return deepEqual(tags, entity.tags) ? result : result.replace(entity.update({ tags: tags }));
+    };
+}
+
+// The "feature type" buttons (inspector header and Feature Type section) can't be used on a locked selection.
+export function ugrApplyPresetChangeLock(buttons, entityIDs, graph) {
+    const locked = ugrAnyLocked(entityIDs, graph);
+    buttons
+        .classed('disabled', locked)
+        .property('disabled', locked);
+}
+
 // The last gate before the inspector changes tags: covers fields, the raw tag editor and its text view.
 export function ugrAllowedTagChanges(changed, entityIDs, graph) {
     if (ugrAnyLocked(entityIDs, graph)) return {};
@@ -41,16 +83,7 @@ export function ugrAllowedTagChanges(changed, entityIDs, graph) {
         return function (tags) {
             const before = Object.assign({}, tags);
             const returned = changed(Object.assign({}, tags));
-            const result = Object.assign({}, returned === undefined ? before : returned);
-            const protectedKeys = new Set(readOnly);
-            Object.keys(before).concat(Object.keys(result))
-                .filter(key => key.startsWith('ugr:'))
-                .forEach(key => protectedKeys.add(key));
-            protectedKeys.forEach(key => {
-                if (key in before) result[key] = before[key];
-                else delete result[key];
-            });
-            return result;
+            return restoreProtectedKeys(before, returned === undefined ? before : returned, readOnly);
         };
     }
     const allowed = {};

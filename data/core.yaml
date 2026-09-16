@@ -2320,6 +2320,7 @@ en:
   ugr:
     locked:
       tooltip: Cadastre feature – read-only
+      deleted: Cadastre features can't be deleted – undo the deletion
     rules:
       loading: Loading rules…
       not_loaded: Rules not loaded – try again

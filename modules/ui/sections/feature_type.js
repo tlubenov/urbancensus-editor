@@ -9,6 +9,8 @@ import { utilRebind } from '../../util';
 import { uiPresetIcon } from '../preset_icon';
 import { uiSection } from '../section';
 import { uiTagReference } from '../tag_reference';
+// ugr: a locked feature's type can't be changed
+import { ugrApplyPresetChangeLock } from '../../ugr/locking/inspector';
 
 
 export function uiSectionFeatureType(context) {
@@ -85,6 +87,8 @@ export function uiSectionFeatureType(context) {
                 d3_event.preventDefault();
                 d3_event.stopPropagation();
             });
+        // ugr: a locked feature's type can't be changed
+        selection.selectAll('.preset-reset').call(ugrApplyPresetChangeLock, _entityIDs, context.graph());
 
         var geometries = entityGeometries();
         selection.select('.preset-list-item button')

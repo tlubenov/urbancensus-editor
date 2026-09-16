@@ -11,6 +11,9 @@ import { geoExtent } from '../geo/extent';
 import { uiPresetIcon } from './preset_icon';
 import { uiTagReference } from './tag_reference';
 import { utilKeybinding, utilNoAuto, utilRebind } from '../util';
+// ugr: a locked feature's type can't be changed; a type change keeps ugr:* and read-only tags
+import { ugrActionPreserveProtectedTags } from '../ugr/locking/inspector';
+import { ugrAnyLocked } from '../ugr/locking/is_locked';
 
 
 export function uiPresetList(context) {
@@ -404,6 +407,11 @@ export function uiPresetList(context) {
 
         item.choose = function() {
             if (d3_select(this).classed('disabled')) return;
+            // ugr: a locked feature's type can't be changed (the list also opens for a locked way's untagged vertex)
+            if (ugrAnyLocked(_entityIDs, context.graph())) {
+                context.ui().flash.duration(4000).iconName('#iD-icon-no').label(t.append('ugr.locked.tooltip'))();
+                return;
+            }
             if (!context.inIntro()) {
                 presetManager.setMostRecent(preset, entityGeometries()[0]);
             }
@@ -412,7 +420,8 @@ export function uiPresetList(context) {
                     for (var i in _entityIDs) {
                         var entityID = _entityIDs[i];
                         var oldPreset = presetManager.match(graph.entity(entityID), graph);
-                        graph = actionChangePreset(entityID, oldPreset, preset)(graph);
+                        // ugr: the new type can't remove or change ugr:* and read-only tags, nor add them
+                        graph = ugrActionPreserveProtectedTags(entityID, actionChangePreset(entityID, oldPreset, preset))(graph);
                     }
                     return graph;
                 },

@@ -31,3 +31,14 @@ export function validationUgrLockedModified(context) {
     validation.type = type;
     return validation;
 }
+
+// Safety net for deletions, which the validator never sees (it validates only entities still in the graph): the ids of
+// entities that were locked in the base graph and are deleted in the edited graph. The commit panel blocks saving
+// while there are any.
+export function ugrLockedDeletions(context) {
+    const history = context.history();
+    const base = history.base();
+    return history.difference().deleted()
+        .filter(entity => ugrIsLocked(entity, base))
+        .map(entity => entity.id);
+}

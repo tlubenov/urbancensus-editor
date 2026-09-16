@@ -7,7 +7,7 @@ import { t, localizer } from '../core/localizer';
 import { actionChangeTags } from '../actions/change_tags';
 import { modeBrowse } from '../modes/browse';
 // ugr: locked features and read-only fields can't be edited
-import { ugrAllowedTagChanges, ugrReadOnlyTagPatterns } from '../ugr/locking/inspector';
+import { ugrAllowedTagChanges, ugrApplyPresetChangeLock, ugrReadOnlyTagPatterns } from '../ugr/locking/inspector';
 import { svgIcon } from '../svg/icon';
 import { utilArrayIdentical } from '../util/array';
 import { utilCleanTags, utilCombinedTags, utilRebind } from '../util';
@@ -75,6 +75,8 @@ export function uiEntityEditor(context) {
             .on('click', function() {
                 dispatch.call('choose', this, _activePresets);
             });
+        // ugr: a locked feature's type can't be changed
+        header.selectAll('.preset-reset').call(ugrApplyPresetChangeLock, _entityIDs, context.graph());
 
         // Body
         var body = selection.selectAll('.inspector-body')
