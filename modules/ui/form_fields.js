@@ -3,6 +3,8 @@ import { select as d3_select } from 'd3-selection';
 import { t } from '../core/localizer';
 import { uiCombobox } from './combobox';
 import { utilGetSetValue, utilNoAuto } from '../util';
+// ugr: apply locked/read-only field state on every render, including after "Add field"
+import { ugrApplyFieldLocks } from '../ugr/locking/inspector';
 
 
 export function uiFormFields(context) {
@@ -49,6 +51,9 @@ export function uiFormFields(context) {
                 d3_select(this)
                     .call(d.render);
             });
+
+        // ugr: apply locked/read-only field state on every render, including after "Add field"
+        ugrApplyFieldLocks(selection, shown);
 
 
         var titles = [];

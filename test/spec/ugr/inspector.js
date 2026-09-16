@@ -55,32 +55,58 @@ describe('iD.ugr inspector guards', function () {
         expect(iD.ugrAllowedTagChanges({ species: undefined }, ['n3'], graph)).toEqual({ species: undefined });
     });
 
-    it('wraps a function change so it cannot alter ugr:* or read-only keys of an editable feature', function () {
-        var change = function (tags) {
-            return Object.assign({}, tags, { species: 'unknown', condition: 'poor', 'ugr:parcel': '1' });
-        };
-        var allowed = iD.ugrAllowedTagChanges(change, ['n3'], graph);
-        expect(typeof allowed).toBe('function');
-        expect(allowed(graph.entity('n3').tags)).toEqual({ natural: 'tree', species: 'unknown', condition: 'good' });
-    });
-
     it('drops a function change to a locked feature', function () {
         expect(iD.ugrAllowedTagChanges(function (tags) { return tags; }, ['w1'], graph)).toEqual({});
     });
 
-    it('makes locked fields inert in the rendered form', function () {
-        var form = d3_select(document.createElement('div'));
-        ['landuse', 'species'].forEach(function (safeid) {
-            var wrap = form.append('div').attr('class', 'wrap-form-field wrap-form-field-' + safeid);
-            wrap.append('div').attr('class', 'form-field-input-wrap').append('input');
-        });
-        iD.ugrDisableLockedFields(form, [{ safeid: 'landuse', key: 'landuse' }], ['w1'], graph);
-        iD.ugrDisableLockedFields(form, [{ safeid: 'species', key: 'species' }], ['n3'], graph);
+    it('wraps a mutating function change so it cannot alter ugr:* or read-only keys of an editable feature', function () {
+        var change = function (tags) {
+            tags.species = 'unknown';
+            tags.condition = 'poor';
+            tags['ugr:parcel'] = '1';
+            return tags;
+        };
+        var original = Object.assign({}, graph.entity('n3').tags);
+        var working = Object.assign({}, original);
+        var allowed = iD.ugrAllowedTagChanges(change, ['n3'], graph);
+        expect(allowed(working)).toEqual({ natural: 'tree', species: 'unknown', condition: 'good' });
+    });
 
-        expect(form.select('.wrap-form-field-landuse').classed('ugr-readonly')).toBe(true);
-        expect(form.select('.wrap-form-field-landuse input').property('disabled')).toBe(true);
-        expect(form.select('.wrap-form-field-landuse input').classed('disabled')).toBe(true);
-        expect(form.select('.wrap-form-field-species').classed('ugr-readonly')).toBe(false);
-        expect(form.select('.wrap-form-field-species input').property('disabled')).toBe(false);
+    it('treats a function change that returns nothing as no change', function () {
+        var allowed = iD.ugrAllowedTagChanges(function () {}, ['n3'], graph);
+        expect(allowed({ natural: 'tree', condition: 'good' })).toEqual({ natural: 'tree', condition: 'good' });
+    });
+
+    it('locks a field whose fallback key is read-only even when it has alternate keys', function () {
+        expect(iD.ugrFieldLocked({ key: 'condition', keys: ['condition:left', 'condition:right'] }, ['n3'], graph)).toBe(true);
+    });
+
+    it('applies field locks to input controls and label buttons, and re-enables only what it disabled', function () {
+        var form = d3_select(document.createElement('div'));
+        var wrap = form.append('div').attr('class', 'wrap-form-field wrap-form-field-landuse');
+        var label = wrap.append('div').attr('class', 'field-label');
+        label.append('button').attr('class', 'remove-icon');
+        label.append('button').attr('class', 'tag-reference-button');
+        wrap.append('div').attr('class', 'form-field-input-wrap').append('input');
+        var other = form.append('div').attr('class', 'wrap-form-field wrap-form-field-brand');
+        other.append('div').attr('class', 'form-field-input-wrap').append('input').classed('disabled', true);   // iD's own wikidata lock
+
+        var landuse = { safeid: 'landuse', ugrLocked: true };
+        var brand = { safeid: 'brand', ugrLocked: false };
+        iD.ugrApplyFieldLocks(form, [landuse, brand]);
+
+        expect(wrap.classed('ugr-readonly')).toBe(true);
+        expect(wrap.select('.form-field-input-wrap input').property('disabled')).toBe(true);
+        expect(wrap.select('.form-field-input-wrap input').classed('disabled')).toBe(true);
+        expect(wrap.select('.remove-icon').property('disabled')).toBe(true);
+        expect(wrap.select('.tag-reference-button').property('disabled')).toBe(false);
+        expect(other.select('input').classed('disabled')).toBe(true);        // untouched
+
+        landuse.ugrLocked = false;
+        iD.ugrApplyFieldLocks(form, [landuse, brand]);
+        expect(wrap.classed('ugr-readonly')).toBe(false);
+        expect(wrap.select('.form-field-input-wrap input').property('disabled')).toBe(false);
+        expect(wrap.select('.form-field-input-wrap input').classed('disabled')).toBe(false);
+        expect(other.select('input').classed('disabled')).toBe(true);        // still untouched
     });
 });

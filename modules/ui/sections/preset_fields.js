@@ -9,7 +9,7 @@ import { uiField } from '../field';
 import { uiFormFields } from '../form_fields';
 import { uiSection } from '../section';
 // ugr: fields of locked features and read-only fields are locked
-import { ugrDisableLockedFields, ugrFieldLocked } from '../../ugr/locking/inspector';
+import { ugrFieldLocked } from '../../ugr/locking/inspector';
 
 export function uiSectionPresetFields(context) {
 
@@ -115,8 +115,9 @@ export function uiSectionPresetFields(context) {
             field
                 .state(_state)
                 .tags(_tags);
-            // ugr: show the lock icon and refuse input on locked and read-only fields
-            if (ugrFieldLocked(field, _entityIDs, context.graph())) field.locked(true);
+            // ugr: remember whether this field is locked; uiFormFields applies it to the DOM on every render
+            field.ugrLocked = ugrFieldLocked(field, _entityIDs, context.graph());
+            if (field.ugrLocked) field.locked(true);
         });
 
 
@@ -126,9 +127,6 @@ export function uiSectionPresetFields(context) {
                 .state(_state)
                 .klass('grouped-items-area')
             );
-
-        // ugr: make locked and read-only fields inert (iD field types don't all honour field.locked())
-        ugrDisableLockedFields(selection, _fieldsArr, _entityIDs, context.graph());
     }
 
     section.presets = function(val) {

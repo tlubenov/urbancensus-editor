@@ -27,7 +27,7 @@ export function ugrReadOnlyTagPatterns(entityIDs, graph) {
 export function ugrFieldLocked(field, entityIDs, graph) {
     if (ugrAnyLocked(entityIDs, graph)) return true;
     const readOnly = ugrReadOnlyKeysFor(entityIDs, graph);
-    return (field.keys || [field.key]).filter(Boolean).some(key => readOnly.includes(key));
+    return [field.key].concat(field.keys || []).filter(Boolean).some(key => readOnly.includes(key));
 }
 
 // The last gate before the inspector changes tags: covers fields, the raw tag editor and its text view.
@@ -35,13 +35,19 @@ export function ugrAllowedTagChanges(changed, entityIDs, graph) {
     if (ugrAnyLocked(entityIDs, graph)) return {};
     const readOnly = ugrReadOnlyKeysFor(entityIDs, graph);
     if (typeof changed === 'function') {
-        // Function changes (multi-key and directional fields) run against current tags; restore ugr:* and read-only keys afterwards.
+        // Function changes (multi-key and directional fields) may mutate their argument in place (e.g.
+        // directional_combo.js, input.js) and return that same object, so the "prior" tags must be
+        // captured before calling it, from a copy that the callback cannot touch.
         return function (tags) {
-            const result = Object.assign({}, changed(tags));
-            const protectedKeys = new Set(readOnly.concat(Object.keys(tags).filter(key => key.startsWith('ugr:'))));
-            Object.keys(result).filter(key => key.startsWith('ugr:')).forEach(key => protectedKeys.add(key));
+            const before = Object.assign({}, tags);
+            const returned = changed(Object.assign({}, tags));
+            const result = Object.assign({}, returned === undefined ? before : returned);
+            const protectedKeys = new Set(readOnly);
+            Object.keys(before).concat(Object.keys(result))
+                .filter(key => key.startsWith('ugr:'))
+                .forEach(key => protectedKeys.add(key));
             protectedKeys.forEach(key => {
-                if (key in tags) result[key] = tags[key];
+                if (key in before) result[key] = before[key];
                 else delete result[key];
             });
             return result;
@@ -55,14 +61,23 @@ export function ugrAllowedTagChanges(changed, entityIDs, graph) {
     return allowed;
 }
 
-// field.locked() alone doesn't disable most iD field types, so locked and read-only fields are made inert in the DOM.
-export function ugrDisableLockedFields(selection, fields, entityIDs, graph) {
+// Applies field.ugrLocked (set by preset_fields) to the rendered DOM on every form render, including "Add field".
+// Only controls this function disabled are re-enabled, so iD's own locks (e.g. wikidata) stay intact.
+export function ugrApplyFieldLocks(selection, fields) {
     fields.forEach(field => {
-        const locked = ugrFieldLocked(field, entityIDs, graph);
+        const locked = !!field.ugrLocked;
         const wrap = selection.selectAll(`.wrap-form-field-${field.safeid}`)
             .classed('ugr-readonly', locked);
-        wrap.selectAll('input, textarea, select, button')
-            .property('disabled', locked)
-            .classed('disabled', locked);
+        if (locked) {
+            wrap.selectAll('.form-field-input-wrap input, .form-field-input-wrap textarea, .form-field-input-wrap select, .form-field-input-wrap button, .field-label .remove-icon, .field-label .modified-icon')
+                .property('disabled', true)
+                .classed('disabled', true)
+                .classed('ugr-disabled', true);
+        } else {
+            wrap.selectAll('.ugr-disabled')
+                .property('disabled', false)
+                .classed('disabled', false)
+                .classed('ugr-disabled', false);
+        }
     });
 }
