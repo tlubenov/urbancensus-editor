@@ -37,6 +37,42 @@ describe('iD.ugr rules store', function () {
         }
     });
 
+    describe('a malformed rules file counts as not loaded', function () {
+        it('rejects an empty object and stays unloaded', async function () {
+            iD.fileFetcher.cache().ugr_rules = {};
+            await expect(iD.ugrLoadRules()).rejects.toBeTruthy();
+            expect(iD.ugrRules()).toBe(null);
+        });
+
+        it('rejects a wrong version, presets, boundary or top-level type', async function () {
+            var malformed = [
+                { presets: {} },
+                { version: '1', presets: {} },
+                { version: 1 },
+                { version: 1, presets: [] },
+                { version: 1, presets: null },
+                { version: 1, presets: {}, boundary: { type: 'Point', coordinates: [0, 0] } },
+                { version: 1, presets: {}, boundary: null },
+                [],
+                'rules'
+            ];
+            for (var i = 0; i < malformed.length; i++) {
+                iD.fileFetcher.cache().ugr_rules = malformed[i];
+                await expect(iD.ugrLoadRules(), JSON.stringify(malformed[i])).rejects.toBeTruthy();
+                expect(iD.ugrRules(), JSON.stringify(malformed[i])).toBe(null);
+            }
+        });
+
+        it('accepts a Polygon or MultiPolygon boundary', async function () {
+            var polygon = { version: 1, presets: {}, boundary: { type: 'Polygon', coordinates: [] } };
+            iD.fileFetcher.cache().ugr_rules = polygon;
+            await expect(iD.ugrLoadRules()).resolves.toBe(polygon);
+            var multi = { version: 2, presets: {}, boundary: { type: 'MultiPolygon', coordinates: [] } };
+            iD.fileFetcher.cache().ugr_rules = multi;
+            await expect(iD.ugrLoadRules()).resolves.toBe(multi);
+        });
+    });
+
     it('registers the ugr_rules file id', function () {
         expect(iD.fileFetcher.fileMap().ugr_rules).toBe('data/ugr_rules.min.json');
     });
