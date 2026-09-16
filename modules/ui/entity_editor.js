@@ -6,6 +6,8 @@ import { presetManager } from '../presets';
 import { t, localizer } from '../core/localizer';
 import { actionChangeTags } from '../actions/change_tags';
 import { modeBrowse } from '../modes/browse';
+// ugr: locked features and read-only fields can't be edited
+import { ugrAllowedTagChanges, ugrReadOnlyTagPatterns } from '../ugr/locking/inspector';
 import { svgIcon } from '../svg/icon';
 import { utilArrayIdentical } from '../util/array';
 import { utilCleanTags, utilCombinedTags, utilRebind } from '../util';
@@ -111,6 +113,10 @@ export function uiEntityEditor(context) {
             if (section.tags) {
                 section.tags(combinedTags);
             }
+            // ugr: the raw tag editor shows locked and read-only tags as read-only
+            if (section.readOnlyTags) {
+                section.readOnlyTags(ugrReadOnlyTagPatterns(_entityIDs, context.graph()));
+            }
             if (section.state) {
                 section.state(_state);
             }
@@ -157,6 +163,11 @@ export function uiEntityEditor(context) {
     // history operation when the user leaves the field.  #2342
     // Use explicit entityIDs in case the selection changes before the event is fired.
     function changeTags(entityIDs, changed, onInput) {
+        // ugr: never change locked features, ugr:* tags or read-only tags. Some fields (e.g.
+        // multi-key or directional-combo) dispatch a callback instead of a tags object; only
+        // an object can be checked for "nothing left to change".
+        changed = ugrAllowedTagChanges(changed, entityIDs, context.graph());
+        if (typeof changed !== 'function' && !Object.keys(changed).length) return;
 
         var actions = [];
         for (var i in entityIDs) {

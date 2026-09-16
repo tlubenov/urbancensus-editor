@@ -8,6 +8,8 @@ import { geoExtent } from '../../geo/extent';
 import { uiField } from '../field';
 import { uiFormFields } from '../form_fields';
 import { uiSection } from '../section';
+// ugr: fields of locked features and read-only fields are locked
+import { ugrFieldLocked } from '../../ugr/locking/inspector';
 
 export function uiSectionPresetFields(context) {
 
@@ -113,6 +115,8 @@ export function uiSectionPresetFields(context) {
             field
                 .state(_state)
                 .tags(_tags);
+            // ugr: show the lock icon and refuse input on locked and read-only fields
+            if (ugrFieldLocked(field, _entityIDs, context.graph())) field.locked(true);
         });
 
 

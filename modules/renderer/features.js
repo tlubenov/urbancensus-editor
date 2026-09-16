@@ -98,6 +98,11 @@ export function rendererFeatures(context) {
         };
     }
 
+    // ugr: locked reference features (cadastre) have their own toggle
+    defineRule('ugr_locked', function isUgrLocked(tags) {
+        return tags['ugr:locked'] === 'yes';
+    });
+
     defineRule('address_points', (tags, geometry) =>
         geometry === 'point' && isAddressPoint(tags),
         100);
@@ -421,6 +426,9 @@ export function rendererFeatures(context) {
     features.getMatches = function(entity, resolver, geometry) {
         if (geometry === 'vertex' ||
             (geometry === 'relation' && !relationShouldBeChecked(entity))) return {};
+
+        // ugr: a locked feature belongs only to the ugr_locked toggle, so that toggle alone hides it
+        if (entity.tags && entity.tags['ugr:locked'] === 'yes') return { ugr_locked: true };
 
         var ent = osmIdManager.key(entity);
         if (!_cache[ent]) {

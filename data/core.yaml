@@ -916,6 +916,10 @@ en:
       label_all: "All photos visible."
       label_date: "Showing photos newer than {date}."
   feature:
+    # ugr: toggle for locked reference features
+    ugr_locked:
+      description: Cadastre
+      tooltip: Parcels and buildings from the cadastre (read-only)
     points:
       description: Points
       tooltip: "Points of Interest"

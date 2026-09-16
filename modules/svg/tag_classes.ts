@@ -161,6 +161,11 @@ export function svgTagClasses<T>() {
             classes.push('tag-wikidata');
         }
 
+        // ugr: locked reference features get their own style (css/90_ugr.css)
+        if (t['ugr:locked'] === 'yes') {
+            classes.push('tag-ugr-locked');
+        }
+
         // ensure that classes for tags keys/values with special characters like spaces
         // are not added to the DOM, because it can cause bizarre issues (#9448)
         return classes

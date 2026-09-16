@@ -1,5 +1,6 @@
 export { ugrBaseVersion, ugrRelease } from './release';
 export { ugrAnyLocked, ugrHasLockTag, ugrIsLocked, ugrLockKey, ugrStripTags } from './locking/is_locked';
+export { ugrAllowedTagChanges, ugrFieldLocked, ugrReadOnlyKeysFor, ugrReadOnlyTagPatterns } from './locking/inspector';
 export { ugrGuardOperation } from './locking/operations';
 export { ugrActionAttachToLocked, ugrCanAttachToLocked, ugrDragBlocked, ugrDrawTarget, ugrSnapNodes } from './locking/editing';
 export { ugrEvaluate, ugrMatchPreset, ugrPointInBoundary, ugrReadOnlyKeys } from './rules/evaluate';
