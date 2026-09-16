@@ -28,7 +28,7 @@ import { osmJoinWays, osmNode } from '../osm';
 import { utilArrayIntersection, utilKeybinding } from '../util';
 
 // ugr: dragging obeys the lock on reference features
-import { ugrActionAttachToLocked, ugrCanAttachToLocked, ugrDragBlocked, ugrSnapNodes } from '../ugr/locking/editing';
+import { ugrActionAttachToLocked, ugrCanAttachToLocked, ugrChosenEdgeLocked, ugrDragBlocked, ugrSnapNodes } from '../ugr/locking/editing';
 import { ugrIsLocked } from '../ugr/locking/is_locked';
 
 
@@ -399,8 +399,8 @@ export function modeDragNode(context) {
                 _actionBounceBack(entity.id, _startLoc)
             );
 
-        // ugr: a locked way never gains a vertex; the node stays where it was dropped
-        } else if (target && target.type === 'way' && !ugrIsLocked(target, context.graph())) {
+        // ugr: a locked way never gains a vertex, also not through a segment it shares with the target; the node stays where it was dropped
+        } else if (target && target.type === 'way' && !ugrIsLocked(target, context.graph()) && !ugrChosenEdgeLocked(target, context.map().mouse(), context.projection, entity.id, context.graph())) {
             var choice = geoChooseEdge(context.graph().childNodes(target), context.map().mouse(), context.projection, entity.id);
             context.replace(
                 actionAddMidpoint({

@@ -1,11 +1,28 @@
 import { actionDeleteNode } from '../../actions/delete_node';
 import { actionDeleteWay } from '../../actions/delete_way';
+import { geoChooseEdge } from '../../geo/geom';
 import { ugrHasLockTag, ugrIsLocked } from './is_locked';
 
-// Dragging: a locked node can't move, and a midpoint of a locked way can't become a new vertex.
+// A segment [nodeIDa, nodeIDb] (either order) is locked when a locked way has the two nodes next to each other.
+// iD's actionAddMidpoint inserts the new vertex into every way with that segment, not only the targeted way.
+export function ugrEdgeLocked(edge, graph) {
+    const node = edge && graph.hasEntity(edge[0]);
+    if (!node) return false;
+    return graph.parentWays(node).some(way => ugrHasLockTag(way) && way.areAdjacent(edge[0], edge[1]));
+}
+
+// Whether the segment of `way` that a click or drop at screen `point` would add a vertex to is locked
+// (chosen with geoChooseEdge, as behaviorDraw and modeDragNode choose it).
+export function ugrChosenEdgeLocked(way, point, projection, activeID, graph) {
+    const choice = geoChooseEdge(graph.childNodes(way), point, projection, activeID);
+    return !!choice && ugrEdgeLocked([way.nodes[choice.index - 1], way.nodes[choice.index]], graph);
+}
+
+// Dragging: a locked node can't move, and a midpoint of a locked way (or of a segment a locked way shares) can't
+// become a new vertex.
 export function ugrDragBlocked(entity, graph) {
     if (!entity) return false;
-    if (entity.type === 'midpoint') return (entity.parents || []).some(ugrHasLockTag);
+    if (entity.type === 'midpoint') return (entity.parents || []).some(ugrHasLockTag) || ugrEdgeLocked(entity.edge, graph);
     return ugrIsLocked(entity, graph);
 }
 
@@ -17,11 +34,14 @@ export function ugrDrawTarget(target, modeID, graph) {
     return target;
 }
 
-// Snapping previews while drawing or dragging: never onto a locked way's segment.
+// Snapping previews while drawing or dragging: never onto a locked way's segment, nor onto a free way's segment
+// that a locked way shares.
 export function ugrSnapNodes(datum, graph) {
     const properties = datum && datum.properties;
     if (!properties || !properties.nodes) return undefined;
     if (properties.entity && ugrIsLocked(properties.entity, graph)) return undefined;
+    const [a, b] = properties.nodes;
+    if (a && b && ugrEdgeLocked([a.id, b.id], graph)) return undefined;
     return properties.nodes;
 }
 

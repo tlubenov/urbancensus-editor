@@ -11,7 +11,7 @@ import { geoChooseEdge, geoVecLength } from '../geo';
 import { utilFastMouse, utilKeybinding, utilRebind } from '../util';
 
 // ugr: drawing never changes a locked feature
-import { ugrDrawTarget } from '../ugr/locking/editing';
+import { ugrChosenEdgeLocked, ugrDrawTarget } from '../ugr/locking/editing';
 
 var _disableSpace = false;
 var _lastSpace = null;
@@ -171,6 +171,8 @@ export function behaviorDraw(context) {
 
         // ugr: clicks never add a vertex to a locked way or tags to a locked node
         target = ugrDrawTarget(target, mode.id, context.graph());
+        // ugr: nor a vertex to a locked way through a segment it shares with the clicked way: the click places a free node
+        if (target && target.type === 'way' && ugrChosenEdgeLocked(target, loc, context.projection, context.activeID(), context.graph())) target = null;
 
         if (target && target.type === 'node' && allowsVertex(target)) {   // Snap to a node
             dispatch.call('clickNode', this, target, d);

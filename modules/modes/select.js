@@ -23,6 +23,8 @@ import { osmNode, osmWay } from '../osm';
 import * as Operations from '../operations/index';
 // ugr: operations on locked features are disabled
 import { ugrGuardOperation } from '../ugr/locking/operations';
+// ugr: double-clicking never adds a vertex to a locked way
+import { ugrDragBlocked, ugrEdgeLocked } from '../ugr/locking/editing';
 import { uiCmd } from '../ui/cmd';
 import {
     utilArrayIntersection, utilArrayUnion, utilDeepMemberSelector, utilEntityOrDeepMemberSelector,
@@ -443,6 +445,8 @@ export function modeSelect(context, selectedIDs) {
                 var choice = geoChooseEdge(context.graph().childNodes(entity), loc, context.projection);
                 var prev = entity.nodes[choice.index - 1];
                 var next = entity.nodes[choice.index];
+                // ugr: not to a locked way, nor to a segment a locked way shares (the vertex would go into both)
+                if (ugrEdgeLocked([prev, next], context.graph())) return;
 
                 context.perform(
                     actionAddMidpoint({ loc: choice.loc, edge: [prev, next] }, new osmNode()),
@@ -451,6 +455,8 @@ export function modeSelect(context, selectedIDs) {
                 context.validator().validate();
 
             } else if (entity.type === 'midpoint') {
+                // ugr: nor through a midpoint of a segment a locked way has
+                if (ugrDragBlocked(entity, context.graph())) return;
                 context.perform(
                     actionAddMidpoint({ loc: entity.loc, edge: entity.edge }, new osmNode()),
                     t('operations.add.annotation.vertex')

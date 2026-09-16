@@ -3,7 +3,7 @@ export { ugrAboutCredits, ugrIssuesUrl, ugrRepositoryUrl, ugrWelcome } from './b
 export { ugrAnyLocked, ugrHasLockTag, ugrIsLocked, ugrLockKey, ugrStripTags } from './locking/is_locked';
 export { ugrActionPreserveProtectedTags, ugrAllowedTagChanges, ugrApplyFieldLocks, ugrApplyPresetChangeLock, ugrFieldLocked, ugrPreserveProtectedTags, ugrReadOnlyKeysFor, ugrReadOnlyTagPatterns } from './locking/inspector';
 export { ugrGuardOperation } from './locking/operations';
-export { ugrActionAttachToLocked, ugrCanAttachToLocked, ugrDragBlocked, ugrDrawTarget, ugrSnapNodes } from './locking/editing';
+export { ugrActionAttachToLocked, ugrCanAttachToLocked, ugrChosenEdgeLocked, ugrDragBlocked, ugrDrawTarget, ugrEdgeLocked, ugrSnapNodes } from './locking/editing';
 export { ugrEvaluate, ugrMatchPreset, ugrPointInBoundary, ugrReadOnlyKeys } from './rules/evaluate';
 export { ugrLoadRules, ugrRules, ugrRulesReady, ugrRulesRequired, ugrSetRules } from './rules/store';
 export { ugrStartRules } from './rules/start';
