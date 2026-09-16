@@ -2303,3 +2303,7 @@ en:
     identifier: "Identifier"
     label: "Label"
     description: "Description"
+  # ugr: Urban Green Register strings (modules/ugr); Bulgarian comes from urban-green-register/editor/wording
+  ugr:
+    locked:
+      tooltip: Cadastre feature – read-only

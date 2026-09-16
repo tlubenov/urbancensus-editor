@@ -21,6 +21,8 @@ import { modeDragNode } from './drag_node';
 import { modeDragNote } from './drag_note';
 import { osmNode, osmWay } from '../osm';
 import * as Operations from '../operations/index';
+// ugr: operations on locked features are disabled
+import { ugrGuardOperation } from '../ugr/locking/operations';
 import { uiCmd } from '../ui/cmd';
 import {
     utilArrayIntersection, utilArrayUnion, utilDeepMemberSelector, utilEntityOrDeepMemberSelector,
@@ -209,6 +211,9 @@ export function modeSelect(context, selectedIDs) {
                 Operations.operationDelete(context, selectedIDs)
             ]);
 
+        // ugr: disable operations that would change a locked feature
+        _operations = _operations.map(operation => ugrGuardOperation(operation, context, selectedIDs));
+
         _operations
             .filter(operation => operation.available())
             .forEach(operation => {
@@ -334,7 +339,8 @@ export function modeSelect(context, selectedIDs) {
                 // prevent nudging during low zoom selection
                 if (!context.map().withinEditableZoom()) return;
 
-                var moveOp = operationMove(context, selectedIDs);
+                // ugr: nudging moves the selection, so it obeys the lock
+                var moveOp = ugrGuardOperation(operationMove(context, selectedIDs), context, selectedIDs);
                 if (moveOp.disabled()) {
                     context.ui().flash
                         .duration(4000)
