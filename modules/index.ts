@@ -24,3 +24,6 @@ export * from './validations/index';
 export let debug = false;
 
 export const setDebug = (newValue: boolean) => { debug = newValue; };
+
+// ugr: Urban Green Register additions live in modules/ugr
+export * from './ugr/index';

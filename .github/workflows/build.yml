@@ -3,11 +3,13 @@
 
 name: build
 
+# ugr: build our main branch, pull requests to it, and release tags
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main ]
+    tags: [ 'ugr-*' ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main ]
 
 permissions:
   contents: read
