@@ -1,3 +1,5 @@
+import { select as d3_select } from 'd3-selection';
+
 describe('iD.ugr inspector guards', function () {
     var graph;
     var rules = {
@@ -51,5 +53,34 @@ describe('iD.ugr inspector guards', function () {
 
     it('keeps key removals that are allowed', function () {
         expect(iD.ugrAllowedTagChanges({ species: undefined }, ['n3'], graph)).toEqual({ species: undefined });
+    });
+
+    it('wraps a function change so it cannot alter ugr:* or read-only keys of an editable feature', function () {
+        var change = function (tags) {
+            return Object.assign({}, tags, { species: 'unknown', condition: 'poor', 'ugr:parcel': '1' });
+        };
+        var allowed = iD.ugrAllowedTagChanges(change, ['n3'], graph);
+        expect(typeof allowed).toBe('function');
+        expect(allowed(graph.entity('n3').tags)).toEqual({ natural: 'tree', species: 'unknown', condition: 'good' });
+    });
+
+    it('drops a function change to a locked feature', function () {
+        expect(iD.ugrAllowedTagChanges(function (tags) { return tags; }, ['w1'], graph)).toEqual({});
+    });
+
+    it('makes locked fields inert in the rendered form', function () {
+        var form = d3_select(document.createElement('div'));
+        ['landuse', 'species'].forEach(function (safeid) {
+            var wrap = form.append('div').attr('class', 'wrap-form-field wrap-form-field-' + safeid);
+            wrap.append('div').attr('class', 'form-field-input-wrap').append('input');
+        });
+        iD.ugrDisableLockedFields(form, [{ safeid: 'landuse', key: 'landuse' }], ['w1'], graph);
+        iD.ugrDisableLockedFields(form, [{ safeid: 'species', key: 'species' }], ['n3'], graph);
+
+        expect(form.select('.wrap-form-field-landuse').classed('ugr-readonly')).toBe(true);
+        expect(form.select('.wrap-form-field-landuse input').property('disabled')).toBe(true);
+        expect(form.select('.wrap-form-field-landuse input').classed('disabled')).toBe(true);
+        expect(form.select('.wrap-form-field-species').classed('ugr-readonly')).toBe(false);
+        expect(form.select('.wrap-form-field-species input').property('disabled')).toBe(false);
     });
 });

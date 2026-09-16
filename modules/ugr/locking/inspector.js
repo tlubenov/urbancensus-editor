@@ -33,14 +33,36 @@ export function ugrFieldLocked(field, entityIDs, graph) {
 // The last gate before the inspector changes tags: covers fields, the raw tag editor and its text view.
 export function ugrAllowedTagChanges(changed, entityIDs, graph) {
     if (ugrAnyLocked(entityIDs, graph)) return {};
-    // Multi-key and directional-combo fields dispatch a callback (tags => tags) rather than a tags
-    // object. It runs against the current tags later, so there is nothing to filter here by key.
-    if (typeof changed === 'function') return changed;
     const readOnly = ugrReadOnlyKeysFor(entityIDs, graph);
+    if (typeof changed === 'function') {
+        // Function changes (multi-key and directional fields) run against current tags; restore ugr:* and read-only keys afterwards.
+        return function (tags) {
+            const result = Object.assign({}, changed(tags));
+            const protectedKeys = new Set(readOnly.concat(Object.keys(tags).filter(key => key.startsWith('ugr:'))));
+            Object.keys(result).filter(key => key.startsWith('ugr:')).forEach(key => protectedKeys.add(key));
+            protectedKeys.forEach(key => {
+                if (key in tags) result[key] = tags[key];
+                else delete result[key];
+            });
+            return result;
+        };
+    }
     const allowed = {};
     for (const key in changed) {
         if (key.startsWith('ugr:') || readOnly.includes(key)) continue;
         allowed[key] = changed[key];
     }
     return allowed;
+}
+
+// field.locked() alone doesn't disable most iD field types, so locked and read-only fields are made inert in the DOM.
+export function ugrDisableLockedFields(selection, fields, entityIDs, graph) {
+    fields.forEach(field => {
+        const locked = ugrFieldLocked(field, entityIDs, graph);
+        const wrap = selection.selectAll(`.wrap-form-field-${field.safeid}`)
+            .classed('ugr-readonly', locked);
+        wrap.selectAll('input, textarea, select, button')
+            .property('disabled', locked)
+            .classed('disabled', locked);
+    });
 }
