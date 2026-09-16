@@ -374,6 +374,8 @@ export function coreContext(this: object): coreContext {
   };
 
   context.moveToNote = (noteId, moveTo) => {
+    // ugr: OSM Notes are removed; nothing loads or selects a note while the notes layer is off (always, in this editor)
+    if (!context.layers().layer('notes').enabled()) return;
     context.loadNote(noteId, (err) => {
       if (err) return;
       // zoom to, used note loc

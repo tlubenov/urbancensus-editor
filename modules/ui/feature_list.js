@@ -262,12 +262,7 @@ export function uiFeatureList(context) {
                     type: t('inspector.relation'),
                     name: q
                 });
-                extraResults.push({
-                    id: 'note' + q,
-                    geometry: 'note',
-                    type: t('note.note'),
-                    name: q
-                });
+                // ugr: no OSM Notes in search results
             }
 
             return [...idResult, ...localResults, ...coordResult, ...geocodeResults, ...extraResults];
