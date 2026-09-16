@@ -79,19 +79,8 @@ export function uiPanelHistory(context) {
                 .call(t.append('info_panels.history.changeset_link'));
         }
 
-        links
-            .append('a')
-            .attr('class', 'changeset-osmcha-link')
-            .attr('href', 'https://osmcha.org/changesets/' + changeset)
-            .attr('target', '_blank')
-            .text('OSMCha');
-
-        links
-            .append('a')
-            .attr('class', 'changeset-achavi-link')
-            .attr('href', 'https://overpass-api.de/achavi/?changeset=' + changeset)
-            .attr('target', '_blank')
-            .text('Achavi');
+        // ugr: no OSMCha link (a third-party OpenStreetMap service that doesn't know our changesets)
+        // ugr: no Achavi link (a third-party OpenStreetMap service that doesn't know our changesets)
     }
 
 
@@ -201,13 +190,7 @@ export function uiPanelHistory(context) {
                 .attr('target', '_blank')
                 .call(t.append('info_panels.history.history_link'));
         }
-        links
-            .append('a')
-            .attr('class', 'pewu-history-viewer-link')
-            .attr('href', 'https://pewu.github.io/osm-history/#/' + entity.type + '/' + entity.osmId())
-            .attr('target', '_blank')
-            .attr('tabindex', -1)
-            .text('PeWu');
+        // ugr: no PeWu link (a third-party OpenStreetMap history viewer that doesn't know our features)
 
         var list = selection
             .append('ul');
