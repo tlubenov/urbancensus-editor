@@ -52,4 +52,32 @@ describe('iD.ugrStartRules', function () {
         await expect(iD.ugrStartRules(context)).resolves.toBe(null);
         expect(container.selectAll('.loading-modal').size()).toBe(0);
     });
+
+    it('calls onReady once the rules have loaded, not before', async function () {
+        iD.fileFetcher.cache().ugr_rules = rules;
+        var readyWith;
+        var started = iD.ugrStartRules(context, function (loaded) { readyWith = loaded; });
+        expect(readyWith).toBe(undefined);
+        await started;
+        expect(readyWith).toBe(rules);
+    });
+
+    it('calls onReady only after a failed load is retried successfully', async function () {
+        iD.fileFetcher.fileMap().ugr_rules = 'data/does_not_exist.min.json';
+        var calls = 0;
+        await iD.ugrStartRules(context, function () { calls++; });
+        expect(calls).toBe(0);
+
+        iD.fileFetcher.cache().ugr_rules = rules;
+        container.select('.ugr-rules-retry').dispatch('click');
+        await new Promise(function (resolve) { setTimeout(resolve, 0); });
+        expect(calls).toBe(1);
+    });
+
+    it('calls onReady immediately when rules are not required', async function () {
+        iD.ugrRulesRequired(false);
+        var called = false;
+        await iD.ugrStartRules(context, function () { called = true; });
+        expect(called).toBe(true);
+    });
 });

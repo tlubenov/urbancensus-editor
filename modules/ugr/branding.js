@@ -7,8 +7,11 @@ export const ugrIssuesUrl = 'https://github.com/tlubenov/urban-green-register/is
 export const ugrRepositoryUrl = 'https://github.com/tlubenov/urbancensus-editor';
 
 // Replaces iD's splash: product name, one sentence, a start button. Shown once per release.
-export function ugrWelcome() {
+export function ugrWelcome(context) {
     return function (selection) {
+        // Like iD's splash: one modal at a time, and the restore prompt for unsaved edits takes precedence.
+        if (context.history().hasRestorableChanges()) return;
+
         if (prefs('ugr-welcome-seen') === ugrRelease) return;
         prefs('ugr-welcome-seen', ugrRelease);
 

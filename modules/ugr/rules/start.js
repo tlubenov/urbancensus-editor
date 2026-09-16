@@ -5,28 +5,35 @@ import { ugrLoadRules, ugrRulesRequired } from './store';
 
 // Fail closed. While the rules configuration loads, a blocking overlay covers the editor; if loading fails,
 // a blocking dialog (no close button, Escape or click-outside) offers only a retry. context.editable()
-// stays false until the rules load, as a second gate.
-export function ugrStartRules(context) {
-    if (!ugrRulesRequired()) return Promise.resolve(null);
+// stays false until the rules load, as a second gate. `onReady` runs once, only once rules are ready
+// (immediately if they aren't required, after a successful load, or after a successful retry) so callers
+// that also open a start-up modal never stack it on top of the loading overlay or the retry dialog.
+export function ugrStartRules(context, onReady) {
+    const ready = rules => {
+        if (onReady) onReady(rules);
+        return rules;
+    };
+    if (!ugrRulesRequired()) return Promise.resolve(ready(null));
 
     const loading = uiLoading(context).message(t.append('ugr.rules.loading')).blocking(true);
     context.container().call(loading);
 
-    return ugrLoadRules()
-        .then(rules => {
+    return ugrLoadRules().then(
+        rules => {
             loading.close();
             context.map().pan([0, 0]);          // redraw: vertices and handles now that editing is allowed
             context.validator().validate();
-            return rules;
-        })
-        .catch(() => {
+            return ready(rules);
+        },
+        () => {
             loading.close();
-            showRetryDialog(context);
+            showRetryDialog(context, onReady);
             return null;
-        });
+        }
+    );
 }
 
-function showRetryDialog(context) {
+function showRetryDialog(context, onReady) {
     const dialog = uiModal(context.container(), true);
     dialog.select('.modal')
         .classed('modal-alert', true)
@@ -45,7 +52,7 @@ function showRetryDialog(context) {
         .call(t.append('ugr.rules.retry'))
         .on('click', () => {
             dialog.remove();
-            ugrStartRules(context);
+            ugrStartRules(context, onReady);
         })
         .node()
         .focus();

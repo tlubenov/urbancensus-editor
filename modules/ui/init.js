@@ -441,15 +441,16 @@ export function uiInit(context) {
         context.enter(modeBrowse(context));
 
         if (!_initCounter++) {
-            // ugr: load the rules configuration; editing stays off until it loads
-            ugrStartRules(context);
-
-            if (!ui.hash.startWalkthrough) {
-                context.container()
-                    // ugr: our welcome dialog instead of iD's splash
-                    .call(ugrWelcome())
-                    .call(uiRestore(context));
-            }
+            // ugr: load the rules configuration first; the welcome and restore prompt open only once rules are ready,
+            // so a single start-up modal is ever open (uiModal can't stack)
+            ugrStartRules(context, () => {
+                if (!ui.hash.startWalkthrough) {
+                    context.container()
+                        // ugr: our welcome dialog instead of iD's splash
+                        .call(ugrWelcome(context))
+                        .call(uiRestore(context));
+                }
+            });
 
             context.container()
                 .call(ui.shortcuts);
