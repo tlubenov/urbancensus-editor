@@ -1,4 +1,5 @@
 import { t } from '../../core/localizer';
+import { ugrIsOwnRule } from '../validations/disabled';
 import { ugrAnyLocked } from './is_locked';
 
 // Copying a locked feature creates a new, editable feature, so copy stays available.
@@ -18,4 +19,17 @@ export function ugrGuardOperation(operation, context, selectedIDs) {
         return locked() ? t.append('ugr.locked.tooltip') : tooltip.apply(operation, arguments);
     };
     return operation;
+}
+
+// iD's issue fixes can change any feature an issue names, e.g. "Merge points" on a free hedge's close_nodes issue moves
+// the locked parcel corner next to it. Fixes of an iD issue that names a locked feature are shown disabled with the
+// lock tooltip; ignoring the issue (added by validationIssue.fixes afterwards) and our own rules' fixes stay available.
+export function ugrDisableLockedFixes(issue, fixes, context) {
+    if (ugrIsOwnRule(issue.type) || !ugrAnyLocked(issue.entityIds || [], context.graph())) return fixes;
+    fixes.forEach(fix => {
+        if (!fix.onClick) return;
+        fix.onClick = undefined;
+        fix.disabledReason = t('ugr.locked.tooltip');
+    });
+    return fixes;
 }

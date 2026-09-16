@@ -6,8 +6,8 @@ import { geoExtent } from '../geo/extent';
 import { modeSelect } from '../modes/select';
 import { utilArrayChunk, utilArrayDifference, utilArrayGroupBy, utilArrayIntersection, utilArrayUnion, utilEntityAndDeepMemberIDs, utilRebind } from '../util';
 import * as Validations from '../validations/index';
-// ugr: switched-off built-ins; our rules can't be disabled
-import { ugrIsOwnRule, ugrValidationDisabled } from '../ugr/validations/disabled';
+// ugr: switched-off built-ins; our rules can't be disabled; locked features get only our rules
+import { ugrIsOwnRule, ugrRuleKeysFor, ugrValidationDisabled } from '../ugr/validations/disabled';
 
 
 export function coreValidator(context) {
@@ -609,7 +609,8 @@ export function coreValidator(context) {
   //
   function validateEntity(entity, graph) {
     let result = { issues: [], provisional: false };
-    Object.keys(_rules).forEach(runValidation);   // run all rules
+    // ugr: a locked feature gets only our rules, so no iD fix (e.g. "Square this feature") is offered to change it
+    ugrRuleKeysFor(Object.keys(_rules), entity, graph).forEach(runValidation);   // run all rules
     return result;
 
 

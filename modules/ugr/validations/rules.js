@@ -5,6 +5,7 @@ import { utilDisplayLabel } from '../../util/utilDisplayLabel';
 import { ugrEvaluate, ugrMatchPreset } from '../rules/evaluate';
 import { ugrFeatureFor } from '../rules/feature';
 import { ugrRules } from '../rules/store';
+import { ugrIsLocked } from '../locking/is_locked';
 
 export const ugrUnknownValue = 'unknown';
 
@@ -39,7 +40,8 @@ function ugrRuleValidation(code) {
     return function (context) {
         const validation = function (entity, graph) {
             const rules = ugrRules();
-            if (!rules) return [];
+            // Cadastre data (locked features, including the untagged vertices of locked ways) never carries rule issues.
+            if (!rules || ugrIsLocked(entity, graph)) return [];
             const feature = ugrFeatureFor(entity, graph);
             if (!ugrEvaluate(rules, feature).includes(code)) return [];
 

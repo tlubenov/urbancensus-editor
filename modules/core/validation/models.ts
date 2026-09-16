@@ -3,6 +3,8 @@ import { geoExtent } from '../../geo';
 import type { Vec2 } from '../../geo/vector';
 import type { EntityId, OsmEntity } from '../../osm';
 import { t, type LocalizedTextRenderer } from '../localizer';
+// ugr: iD's fixes can't change a locked feature
+import { ugrDisableLockedFixes } from '../../ugr/locking/operations';
 
 export interface Validator {
     (entity: OsmEntity, graph: coreGraph): validationIssue[];
@@ -90,6 +92,8 @@ export class validationIssue<T = unknown> {
 
     fixes(context: iD.Context) {
         var fixes = this.dynamicFixes ? this.dynamicFixes(context) : [];
+        // ugr: fixes of an iD issue that names a locked feature are disabled (ignoring the issue, added below, stays possible)
+        ugrDisableLockedFixes(this, fixes, context);
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         var issue = this;
 
