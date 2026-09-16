@@ -2308,5 +2308,6 @@ en:
     locked:
       tooltip: Cadastre feature – read-only
     rules:
+      loading: Loading rules…
       not_loaded: Rules not loaded – try again
       retry: Try again
