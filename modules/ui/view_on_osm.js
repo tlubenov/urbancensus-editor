@@ -1,53 +1,16 @@
-import { t } from '../core/localizer';
-import { OsmAbstractEntity, osmNote, osmRelation, osmWay } from '../osm';
-import { svgIcon } from '../svg/icon';
-import { getRelativeDate } from '../util/date';
+// ugr: no "view on openstreetmap.org" / history link; only findLastModifiedChild is still used
+import { osmRelation, osmWay } from '../osm';
 
 
-export function uiViewOnOSM(context) {
+// ugr: context is no longer used now that viewOnOSM only removes the link
+export function uiViewOnOSM() {
     var _what;   // an osmEntity or osmNote
 
 
     function viewOnOSM(selection) {
-        var url;
-        if (_what instanceof OsmAbstractEntity) {
-            url = context.connection().historyURL(_what);
-        } else if (_what instanceof osmNote) {
-            url = context.connection().noteURL(_what);
-        }
-
-        var data = ((!_what || _what.isNew()) ? [] : [_what]);
-        var link = selection.selectAll('.view-on-osm')
-            .data(data, function(d) { return d.id; });
-
-        // exit
-        link.exit()
-            .remove();
-
-        // enter
-        var linkEnter = link.enter()
-            .append('a')
-            .attr('class', 'view-on-osm')
-            .attr('target', '_blank')
-            .attr('href', url)
-            .call(svgIcon('#iD-icon-out-link', 'inline'));
-
-
-        if (_what && !(_what instanceof osmNote)) {
-            // node/way/relation
-            const { user, timestamp } = uiViewOnOSM.findLastModifiedChild(context.history().base(), _what);
-
-            linkEnter
-                .call(t.append('inspector.last_touched', {
-                    timeago: getRelativeDate(new Date(timestamp)),
-                    user
-                }))
-                .attr('title', t('inspector.view_on_osm'));
-        } else {
-            linkEnter
-                .append('span')
-                .call(t.append('inspector.view_on_osm'));
-        }
+        // ugr: no "view on openstreetmap.org" / history link
+        selection.selectAll('.view-on-osm').remove();
+        return;
     }
 
 

@@ -2,7 +2,6 @@ import { select as d3_select } from 'd3-selection';
 import { marked } from 'marked';
 
 import { svgIcon } from '../../svg/icon';
-import { uiIntro } from '../intro/intro';
 import { uiPane } from '../pane';
 
 import { t, localizer } from '../../core/localizer';
@@ -345,14 +344,6 @@ export function uiPaneHelp(context) {
         }
 
 
-        function clickWalkthrough(d3_event) {
-            d3_event.preventDefault();
-            if (context.inIntro()) return;
-            context.container().call(uiIntro(context));
-            context.ui().togglePanes();
-        }
-
-
         function clickShortcuts(d3_event) {
             d3_event.preventDefault();
             context.container().call(context.ui().shortcuts, true);
@@ -393,22 +384,7 @@ export function uiPaneHelp(context) {
             .append('div')
             .call(t.append('shortcuts.title'));
 
-        var walkthrough = toc
-            .append('li')
-            .attr('class', 'walkthrough')
-            .append('a')
-            .attr('href', '#')
-            .on('click', clickWalkthrough);
-
-        walkthrough
-            .append('svg')
-            .attr('class', 'logo logo-walkthrough')
-            .append('use')
-            .attr('xlink:href', '#iD-logo-walkthrough');
-
-        walkthrough
-            .append('div')
-            .call(t.append('splash.walkthrough'));
+        // ugr: no OpenStreetMap walkthrough
 
 
         var helpContent = content

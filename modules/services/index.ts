@@ -14,6 +14,8 @@ import serviceWikidata from './wikidata';
 import serviceWikipedia from './wikipedia';
 import serviceMapilio from './mapilio';
 import servicePanoramax from './panoramax';
+// ugr: OpenStreetMap-only and third-party services are removed
+import { ugrPruneServices } from '../ugr/removals';
 
 
 export let services = {
@@ -34,6 +36,9 @@ export let services = {
   mapilio: serviceMapilio,
   panoramax: servicePanoramax
 };
+
+// ugr: keep only our API and vector tiles
+ugrPruneServices(services);
 
 export {
   serviceOsmose,

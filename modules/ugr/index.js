@@ -9,3 +9,4 @@ export { ugrStartRules } from './rules/start';
 export { ugrFeatureFor } from './rules/feature';
 export { ugrDisabledValidations, ugrIsOwnRule, ugrValidationDisabled } from './validations/disabled';
 export { ugrUnknownValue } from './validations/rules';
+export { ugrKeptServices, ugrPruneServices } from './removals';

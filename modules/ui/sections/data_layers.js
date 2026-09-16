@@ -68,7 +68,8 @@ export function uiSectionDataLayers(context) {
     }
 
     function drawOsmItems(selection) {
-        var osmKeys = ['osm', 'notes'];
+        // ugr: no OSM Notes layer
+        var osmKeys = ['osm'];
         var osmLayers = layers.all().filter(function(obj) { return osmKeys.indexOf(obj.id) !== -1; });
 
         var ul = selection
@@ -130,7 +131,8 @@ export function uiSectionDataLayers(context) {
     }
 
     function drawQAItems(selection) {
-        var qaKeys = ['osmose'];
+        // ugr: no QA layers
+        var qaKeys = [];
         var qaLayers = layers.all().filter(function(obj) { return qaKeys.indexOf(obj.id) !== -1; });
 
         var ul = selection

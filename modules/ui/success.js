@@ -5,7 +5,6 @@ import { resolveStrings } from 'osm-community-index';
 
 import { showDonationMessage } from '../../config/id.js';
 
-import { fileFetcher } from '../core/file_fetcher';
 import { locationManager } from '../core/location_manager.js';
 import { t, localizer } from '../core/localizer';
 
@@ -13,8 +12,6 @@ import { svgIcon } from '../svg/icon';
 import { uiDisclosure } from '../ui/disclosure';
 import { utilRebind } from '../util/rebind';
 
-
-let _oci = null;
 
 export function uiSuccess(context) {
   const MAXEVENTS = 2;
@@ -25,37 +22,8 @@ export function uiSuccess(context) {
 
 
   function ensureOSMCommunityIndex() {
-    const data = fileFetcher;
-    return Promise.all([
-        data.get('oci_features'),
-        data.get('oci_resources'),
-        data.get('oci_defaults')
-      ])
-      .then(vals => {
-        if (_oci) return _oci;
-
-        // Merge Custom Features
-        if (vals[0] && Array.isArray(vals[0].features)) {
-          locationManager.addFeatures(vals[0]);
-        }
-
-        let ociResources = Object.values(vals[1].resources);
-        if (ociResources.length) {
-          // Resolve all locationSet features.
-          locationManager.registerLocationSets(ociResources);
-          _oci = {
-            resources: ociResources,
-            defaults: vals[2].defaults
-          };
-          return _oci;
-        } else {
-          _oci = {
-            resources: [],  // no resources?
-            defaults: vals[2].defaults
-          };
-          return _oci;
-        }
-      });
+    // ugr: no OpenStreetMap community index (it is fetched from a public CDN); the section never renders
+    return new Promise(() => {});
   }
 
 

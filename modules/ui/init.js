@@ -21,7 +21,6 @@ import { uiFlash } from './flash';
 import { uiFullScreen } from './full_screen';
 import { uiGeolocate } from './geolocate';
 import { uiInfo } from './info';
-import { uiIntro } from './intro';
 import { uiIssuesInfo } from './issues_info';
 import { uiLoading } from './loading';
 import { uiMapInMap } from './map_in_map';
@@ -471,10 +470,8 @@ export function uiInit(context) {
 
         _initCounter++;
 
-        if (ui.hash.startWalkthrough) {
-            ui.hash.startWalkthrough = false;
-            context.container().call(uiIntro(context));
-        }
+        // ugr: the OpenStreetMap walkthrough is not offered, even via #walkthrough=true
+        ui.hash.startWalkthrough = false;
 
 
         function pan(d) {
