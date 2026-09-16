@@ -80,4 +80,35 @@ describe('iD.ugrStartRules', function () {
         await iD.ugrStartRules(context, function () { called = true; });
         expect(called).toBe(true);
     });
+
+    describe('when onReady throws', function () {
+        var error = new Error('welcome dialog failed');
+        var logged;
+
+        beforeEach(function () {
+            logged = vi.spyOn(console, 'error').mockImplementation(function () {});
+        });
+
+        afterEach(function () {
+            logged.mockRestore();
+        });
+
+        function throwingOnReady() { throw error; }
+
+        it('logs the error, still resolves with the rules and shows no retry dialog', async function () {
+            iD.fileFetcher.cache().ugr_rules = rules;
+            await expect(iD.ugrStartRules(context, throwingOnReady)).resolves.toBe(rules);
+            expect(container.selectAll('.ugr-rules-failed').size()).toBe(0);
+            expect(container.selectAll('.loading-modal').size()).toBe(0);
+            expect(logged).toHaveBeenCalledWith(error);
+        });
+
+        it('logs the error and resolves when rules are not required', async function () {
+            iD.ugrRulesRequired(false);
+            var started;
+            expect(function () { started = iD.ugrStartRules(context, throwingOnReady); }).not.toThrow();
+            await expect(started).resolves.toBe(null);
+            expect(logged).toHaveBeenCalledWith(error);
+        });
+    });
 });

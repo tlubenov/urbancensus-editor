@@ -10,7 +10,13 @@ import { ugrLoadRules, ugrRulesRequired } from './store';
 // that also open a start-up modal never stack it on top of the loading overlay or the retry dialog.
 export function ugrStartRules(context, onReady) {
     const ready = rules => {
-        if (onReady) onReady(rules);
+        // An exception in onReady (e.g. the welcome dialog) is logged: it must not reject start-up or show the retry
+        // dialog, because the rules did load.
+        try {
+            if (onReady) onReady(rules);
+        } catch (e) {
+            console.error(e);  // eslint-disable-line no-console
+        }
         return rules;
     };
     if (!ugrRulesRequired()) return Promise.resolve(ready(null));
