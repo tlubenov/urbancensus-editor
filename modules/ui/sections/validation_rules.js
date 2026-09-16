@@ -5,6 +5,8 @@ import { t } from '../../core/localizer';
 import { utilGetSetValue, utilNoAuto } from '../../util';
 import { uiTooltip } from '../tooltip';
 import { uiSection } from '../section';
+// ugr: our rules are not listed as user toggles
+import { ugrIsOwnRule } from '../../ugr/validations/disabled';
 
 export function uiSectionValidationRules(context) {
 
@@ -17,7 +19,8 @@ export function uiSectionValidationRules(context) {
         .label(() => t.append('issues.rules.title'));
 
     var _ruleKeys = context.validator().getRuleKeys()
-        .filter(function(key) { return key !== 'maprules'; })
+        // ugr: hide our rules, which can't be switched off
+        .filter(function(key) { return key !== 'maprules' && !ugrIsOwnRule(key); })
         .sort(function(key1, key2) {
             // alphabetize by localized title
             return t('issues.' + key1 + '.title') < t('issues.' + key2 + '.title') ? -1 : 1;

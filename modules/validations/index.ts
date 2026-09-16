@@ -16,3 +16,11 @@ export { validationOutdatedTags } from './outdated_tags';
 export { validationPrivateData } from './private_data';
 export { validationSuspiciousName } from './suspicious_name';
 export { validationUnsquareWay } from './unsquare_way';
+
+// ugr: Urban Green Register validations (errors that block saving)
+export {
+    validationUgrLockedModified,
+    validationUgrMissingRequired,
+    validationUgrOutsideBoundary,
+    validationUgrValueNotInList
+} from '../ugr/validations/index';

@@ -5,3 +5,6 @@ export { ugrActionAttachToLocked, ugrCanAttachToLocked, ugrDragBlocked, ugrDrawT
 export { ugrEvaluate, ugrMatchPreset, ugrPointInBoundary, ugrReadOnlyKeys } from './rules/evaluate';
 export { ugrLoadRules, ugrRules, ugrRulesReady, ugrRulesRequired, ugrSetRules } from './rules/store';
 export { ugrStartRules } from './rules/start';
+export { ugrFeatureFor } from './rules/feature';
+export { ugrDisabledValidations, ugrIsOwnRule, ugrValidationDisabled } from './validations/disabled';
+export { ugrUnknownValue } from './validations/rules';

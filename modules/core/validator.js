@@ -6,6 +6,8 @@ import { geoExtent } from '../geo/extent';
 import { modeSelect } from '../modes/select';
 import { utilArrayChunk, utilArrayDifference, utilArrayGroupBy, utilArrayIntersection, utilArrayUnion, utilEntityAndDeepMemberIDs, utilRebind } from '../util';
 import * as Validations from '../validations/index';
+// ugr: switched-off built-ins; our rules can't be disabled
+import { ugrIsOwnRule, ugrValidationDisabled } from '../ugr/validations/disabled';
 
 
 export function coreValidator(context) {
@@ -82,12 +84,15 @@ export function coreValidator(context) {
       if (typeof validation !== 'function') return;
       const fn = validation(context);
       const key = fn.type;
+      // ugr: OSM-community validations are switched off in this editor
+      if (ugrValidationDisabled(key)) return;
       _rules[key] = fn;
     });
 
     let disabledRules = prefs('validate-disabledRules');
     if (disabledRules) {
-      disabledRules.split(',').forEach(k => _disabledRules[k] = true);
+      // ugr: a stored preference can't disable our rules
+      disabledRules.split(',').filter(k => !ugrIsOwnRule(k)).forEach(k => _disabledRules[k] = true);
     }
   };
 
@@ -421,6 +426,8 @@ export function coreValidator(context) {
   //   `key` - the rule to toggle (e.g. 'crossing_ways')
   //
   validator.toggleRule = (key) => {
+    // ugr: our rules can't be toggled off
+    if (ugrIsOwnRule(key)) return;
     if (_disabledRules[key]) {
       delete _disabledRules[key];
     } else {
@@ -440,6 +447,8 @@ export function coreValidator(context) {
   //   `keys` - Array or Set containing rule keys to disable
   //
   validator.disableRules = (keys) => {
+    // ugr: our rules can't be disabled
+    keys = Array.from(keys).filter(k => !ugrIsOwnRule(k));
     _disabledRules = {};
     keys.forEach(k => _disabledRules[k] = true);
 

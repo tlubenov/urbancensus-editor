@@ -1876,6 +1876,15 @@ en:
         title: Use different layers or levels
       use_different_levels:
         title: Use different levels
+    # ugr: titles of our rules (used by iD's issues pane)
+    ugr_missing_required:
+      title: Missing required fields
+    ugr_outside_boundary:
+      title: Outside the municipality
+    ugr_value_not_in_list:
+      title: Values not in the code list
+    ugr_locked_modified:
+      title: Changed cadastre features
   intro:
     done: done
     ok: OK
@@ -2311,3 +2320,20 @@ en:
       loading: Loading rules…
       not_loaded: Rules not loaded – try again
       retry: Try again
+    issues:
+      ugr_missing_required:
+        message: "{feature} is missing a required field"
+      ugr_outside_boundary:
+        message: "{feature} is outside the municipality boundary"
+      ugr_value_not_in_list:
+        message: "{feature} has a value that is not in the code list"
+      ugr_locked_modified:
+        message: A cadastre feature has been changed
+      fix:
+        set_unknown:
+          species: "Species: unknown"
+          genus: "Genus: unknown"
+          annotation: Set an unknown value.
+        revert:
+          title: Restore the cadastre feature
+          annotation: Restored a cadastre feature.
