@@ -1,4 +1,5 @@
 export { ugrBaseVersion, ugrRelease } from './release';
+export { ugrAboutCredits, ugrIssuesUrl, ugrRepositoryUrl, ugrWelcome } from './branding';
 export { ugrAnyLocked, ugrHasLockTag, ugrIsLocked, ugrLockKey, ugrStripTags } from './locking/is_locked';
 export { ugrAllowedTagChanges, ugrApplyFieldLocks, ugrFieldLocked, ugrReadOnlyKeysFor, ugrReadOnlyTagPatterns } from './locking/inspector';
 export { ugrGuardOperation } from './locking/operations';

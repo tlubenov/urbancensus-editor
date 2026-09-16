@@ -32,7 +32,6 @@ import { uiShortcuts } from './shortcuts';
 import { uiSidebar } from './sidebar';
 import { uiSourceSwitch } from './source_switch';
 import { uiSpinner } from './spinner';
-import { uiSplash } from './splash';
 import { uiStatus } from './status';
 import { uiTooltip } from './tooltip';
 import { uiTopToolbar } from './top_toolbar';
@@ -49,6 +48,8 @@ import { uiPanePreferences } from './panes/preferences';
 
 // ugr: load the rules configuration at start-up
 import { ugrStartRules } from '../ugr/rules/start';
+// ugr: our issue tracker, welcome dialog and credits
+import { ugrAboutCredits, ugrIssuesUrl, ugrWelcome } from '../ugr/branding';
 
 export function uiInit(context) {
     var _initCounter = 0;
@@ -317,28 +318,27 @@ export function uiInit(context) {
             .attr('class', 'feature-warning')
             .call(uiFeatureInfo(context));
 
+        // ugr: credits for iD and the data sources
+        aboutList
+            .append('li')
+            .attr('class', 'ugr-about')
+            .call(ugrAboutCredits());
+
         var issueLinks = aboutList
             .append('li');
 
         issueLinks
             .append('a')
             .attr('target', '_blank')
-            .attr('href', 'https://github.com/openstreetmap/iD/issues')
+            // ugr: report problems to the register's issue tracker
+            .attr('href', ugrIssuesUrl)
             .attr('aria-label', t('report_a_bug'))
             .call(svgIcon('#iD-icon-bug', 'light'))
             .call(uiTooltip()
                 .title(() => t.append('report_a_bug'))
                 .placement('top'));
 
-        issueLinks
-            .append('a')
-            .attr('target', '_blank')
-            .attr('href', 'https://github.com/openstreetmap/iD/blob/develop/CONTRIBUTING.md#translating')
-            .attr('aria-label', t('help_translate'))
-            .call(svgIcon('#iD-icon-translate', 'light'))
-            .call(uiTooltip()
-                .title(() => t.append('help_translate'))
-                .placement('top'));
+        // ugr: no iD translation link; our wording is maintained in urban-green-register
 
         aboutList
             .append('li')
@@ -446,7 +446,8 @@ export function uiInit(context) {
 
             if (!ui.hash.startWalkthrough) {
                 context.container()
-                    .call(uiSplash(context))
+                    // ugr: our welcome dialog instead of iD's splash
+                    .call(ugrWelcome())
                     .call(uiRestore(context));
             }
 

@@ -2341,3 +2341,12 @@ en:
         revert:
           title: Restore the cadastre feature
           annotation: Restored a cadastre feature.
+    brand:
+      name: Urban Green Register
+    welcome:
+      title: Urban Green Register editor
+      text: Draw and update trees, hedges, green areas and park zones of your municipality.
+      start: Start editing
+    about:
+      credits: "Based on iD (ISC) · Cadastre: АГКК · Imagery: municipal orthophotos"
+      version: "Based on iD {version}"
