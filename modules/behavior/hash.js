@@ -177,7 +177,8 @@ export function behaviorHash(context) {
 
             if (q.id && mode) {
                 var ids = q.id.split(',').filter(function(id) {
-                    return context.hasEntity(id) || id.startsWith('note/');
+                    // ugr: OSM Notes are removed; ignore note/ ids
+                    return context.hasEntity(id);
                 });
                 if (ids.length && ['browse', 'select-note', 'select'].includes(mode.id)) {
                     if (ids.length === 1 && ids[0].startsWith('note/')) {
@@ -219,7 +220,8 @@ export function behaviorHash(context) {
 
         if (q.id) {
             // targeting specific features: download, select, and zoom to them
-            const selectIds = q.id.split(',');
+            // ugr: OSM Notes are removed; ignore note/ ids so this branch never runs
+            const selectIds = q.id.split(',').filter(id => !id.startsWith('note/'));
             if (selectIds.length === 1 && selectIds[0].startsWith('note/')) {
                 const noteId = +selectIds[0].split('/')[1];
                 context.moveToNote(noteId, !q.map);

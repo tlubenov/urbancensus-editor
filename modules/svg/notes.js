@@ -6,11 +6,9 @@ import { dispatch as d3_dispatch } from 'd3-dispatch';
 import { modeBrowse } from '../modes/browse';
 import { svgPointTransform } from './helpers';
 import { services } from '../services';
-import { utilStringQs } from '../util';
 
-var hash = utilStringQs(window.location.hash);
-
-var _notesEnabled = !!hash.notes;
+// ugr: OSM Notes are not part of this editor; the layer never starts enabled (ignores #notes=true)
+var _notesEnabled = false;
 var _osmService;
 
 
@@ -244,6 +242,9 @@ export function svgNotes(projection, context, dispatch) {
     // Toggles the layer on and off
     drawNotes.enabled = function(val) {
         if (!arguments.length) return _notesEnabled;
+
+        // ugr: the notes layer can't be switched on
+        val = false;
 
         _notesEnabled = val;
         if (_notesEnabled) {
