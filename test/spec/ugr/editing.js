@@ -81,5 +81,17 @@ describe('iD.ugr editing guards', function () {
             expect(result.entity('w1')).toBe(parcel);
             expect(result.entity('n1')).toBe(corner);
         });
+
+        it('deletes a way that collapses when its end is attached to a locked node it already contains', function () {
+            var start = graph.replace(new iD.osmWay({ id: 'w3', nodes: ['n1', 'n9'], tags: { barrier: 'hedge' } }))
+                .replace(graph.entity('w2').update({ nodes: ['n8'] }));
+            var parcel = start.entity('w1');
+            var result = iD.ugrActionAttachToLocked('n1', 'n9')(start);
+
+            expect(result.hasEntity('w3')).toBe(undefined);
+            expect(result.hasEntity('n9')).toBe(undefined);
+            expect(result.entity('w1')).toBe(parcel);
+            expect(result.entity('n1')).toBe(start.entity('n1'));
+        });
     });
 });

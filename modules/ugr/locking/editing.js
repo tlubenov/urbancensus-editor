@@ -1,4 +1,5 @@
 import { actionDeleteNode } from '../../actions/delete_node';
+import { actionDeleteWay } from '../../actions/delete_way';
 import { ugrHasLockTag, ugrIsLocked } from './is_locked';
 
 // Dragging: a locked node can't move, and a midpoint of a locked way can't become a new vertex.
@@ -40,6 +41,12 @@ export function ugrActionAttachToLocked(lockedID, nodeID) {
         graph.parentRelations(node).forEach(relation => {
             graph = graph.replace(relation.replaceMember(node, locked));
         });
-        return actionDeleteNode(node.id)(graph);
+        graph = actionDeleteNode(node.id)(graph);
+        // Like actionConnect: delete ways that collapsed because they already contained the locked node.
+        // The locked node's own locked ways are unchanged, so they are never degenerate here.
+        graph.parentWays(locked).forEach(way => {
+            if (way.isDegenerate()) graph = actionDeleteWay(way.id)(graph);
+        });
+        return graph;
     };
 }
