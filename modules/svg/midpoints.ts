@@ -7,6 +7,9 @@ import type { NodeId, osmWay } from '../osm';
 import type { Feature } from 'geojson';
 import type { Vec2 } from '../geo/vector';
 
+// ugr: locked ways get no midpoint handles
+import { ugrIsLocked } from '../ugr/locking/is_locked';
+
 export interface Midpoint {
     type: 'midpoint',
     id: string;
@@ -75,6 +78,8 @@ export function svgMidpoints(projection: Projection, context: iD.Context) {
             if (entity.type !== 'way') continue;
             if (!filter(entity)) continue;
             if (context.selectedIDs().indexOf(entity.id) < 0) continue;
+            // ugr: a midpoint handle would let the user add a vertex to a locked way
+            if (ugrIsLocked(entity, graph)) continue;
 
             var nodes = graph.childNodes(entity);
             for (var j = 0; j < nodes.length - 1; j++) {

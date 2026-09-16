@@ -27,6 +27,10 @@ import { modeSelect } from './select';
 import { osmJoinWays, osmNode } from '../osm';
 import { utilArrayIntersection, utilKeybinding } from '../util';
 
+// ugr: dragging obeys the lock on reference features
+import { ugrActionAttachToLocked, ugrCanAttachToLocked, ugrDragBlocked, ugrSnapNodes } from '../ugr/locking/editing';
+import { ugrIsLocked } from '../ugr/locking/is_locked';
+
 
 
 export function modeDragNode(context) {
@@ -143,6 +147,16 @@ export function modeDragNode(context) {
             return drag.cancel();
         }
 
+        // ugr: locked nodes, and midpoints of locked ways, can't be dragged
+        if (ugrDragBlocked(entity, context.graph())) {
+            _isCancelled = true;
+            context.ui().flash
+                .duration(4000)
+                .iconName('#iD-icon-no')
+                .label(t.append('ugr.locked.tooltip'))();
+            return drag.cancel();
+        }
+
         if (_wasMidpoint) {
             var midpoint = entity;
             entity = new osmNode();
@@ -200,7 +214,8 @@ export function modeDragNode(context) {
             var d = datum(d3_event);
             target = d && d.properties && d.properties.entity;
             var targetLoc = target && target.loc;
-            var targetNodes = d && d.properties && d.properties.nodes;
+            // ugr: no snapping preview onto a locked way's segment
+            var targetNodes = ugrSnapNodes(d, context.graph());
 
             if (targetLoc) {   // snap to node/vertex - a point target with `.loc`
                 if (shouldSnapToNode(target)) {
@@ -384,7 +399,8 @@ export function modeDragNode(context) {
                 _actionBounceBack(entity.id, _startLoc)
             );
 
-        } else if (target && target.type === 'way') {
+        // ugr: a locked way never gains a vertex; the node stays where it was dropped
+        } else if (target && target.type === 'way' && !ugrIsLocked(target, context.graph())) {
             var choice = geoChooseEdge(context.graph().childNodes(target), context.map().mouse(), context.projection, entity.id);
             context.replace(
                 actionAddMidpoint({
@@ -393,6 +409,21 @@ export function modeDragNode(context) {
                 }, entity),
                 connectAnnotation(entity, target)
             );
+
+        // ugr: joining a locked node keeps it unchanged, or bounces back
+        } else if (target && target.type === 'node' && ugrIsLocked(target, context.graph())) {
+            if (ugrCanAttachToLocked(entity)) {
+                context.replace(
+                    ugrActionAttachToLocked(target.id, entity.id),
+                    connectAnnotation(entity, target)
+                );
+            } else {
+                context.perform(_actionBounceBack(entity.id, _startLoc));
+                context.ui().flash
+                    .duration(4000)
+                    .iconName('#iD-icon-no')
+                    .label(t.append('ugr.locked.tooltip'))();
+            }
 
         } else if (target && target.type === 'node' && shouldSnapToNode(target)) {
             context.replace(

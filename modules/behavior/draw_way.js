@@ -17,6 +17,9 @@ import { osmNode } from '../osm/node';
 import { utilRebind } from '../util/rebind';
 import { utilKeybinding } from '../util';
 
+// ugr: no snapping preview onto locked ways
+import { ugrSnapNodes } from '../ugr/locking/editing';
+
 export function behaviorDrawWay(context, wayID, mode, startGraph) {
     const keybinding = utilKeybinding('drawWay');
 
@@ -119,7 +122,8 @@ export function behaviorDrawWay(context, wayID, mode, startGraph) {
 
         var targetLoc = datum && datum.properties && datum.properties.entity &&
             allowsVertex(datum.properties.entity) && datum.properties.entity.loc;
-        var targetNodes = datum && datum.properties && datum.properties.nodes;
+        // ugr: no snapping preview onto a locked way's segment
+        var targetNodes = ugrSnapNodes(datum, context.graph());
 
         if (targetLoc) {   // snap to node/vertex - a point target with `.loc`
             loc = targetLoc;

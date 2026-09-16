@@ -10,6 +10,9 @@ import { behaviorHover } from './hover';
 import { geoChooseEdge, geoVecLength } from '../geo';
 import { utilFastMouse, utilKeybinding, utilRebind } from '../util';
 
+// ugr: drawing never changes a locked feature
+import { ugrDrawTarget } from '../ugr/locking/editing';
+
 var _disableSpace = false;
 var _lastSpace = null;
 
@@ -165,6 +168,9 @@ export function behaviorDraw(context) {
         var target = d && d.properties && d.properties.entity;
 
         var mode = context.mode();
+
+        // ugr: clicks never add a vertex to a locked way or tags to a locked node
+        target = ugrDrawTarget(target, mode.id, context.graph());
 
         if (target && target.type === 'node' && allowsVertex(target)) {   // Snap to a node
             dispatch.call('clickNode', this, target, d);
