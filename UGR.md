@@ -32,7 +32,7 @@ The host has no Node; use `scripts/ugr-docker.sh`, e.g. `scripts/ugr-docker.sh n
 
 Order is not significant.
 
-Generated with `grep -rn "ugr: " modules config data/core.yaml css .github | grep -v "^modules/ugr/"` at release ugr-2.42.2-2:
+Generated with `grep -rn "ugr: " modules config data/core.yaml css .github | grep -v "^modules/ugr/"` at release ugr-2.42.2-3:
 
 ```
 modules/index.ts:28:// ugr: Urban Green Register additions live in modules/ugr
@@ -60,7 +60,7 @@ modules/core/validator.js:450:    // ugr: our rules can't be disabled
 modules/core/validator.js:612:    // ugr: a locked feature gets only our rules, so no iD fix (e.g. "Square this feature") is offered to change it
 modules/validations/index.ts:20:// ugr: Urban Green Register validations (errors that block saving)
 modules/actions/copy_entities.ts:5:// ugr: pasted copies are ordinary features
-modules/actions/copy_entities.ts:20:            // ugr: drop ugr:* tags (such as ugr:locked) so a copied parcel becomes an editable feature
+modules/actions/copy_entities.ts:20:            // ugr: drop backend-owned ugr:* tags (such as ugr:locked) so a copied parcel becomes an editable feature; declared ugr: attributes stay
 modules/core/validation/models.ts:6:// ugr: iD's fixes can't change a locked feature
 modules/core/validation/models.ts:95:        // ugr: fixes of an iD issue that names a locked feature are disabled (ignoring the issue, added below, stays possible)
 modules/svg/midpoints.ts:10:// ugr: locked ways get no midpoint handles
@@ -97,13 +97,13 @@ modules/ui/sections/preset_fields.js:11:// ugr: fields of locked features and re
 modules/ui/sections/preset_fields.js:118:            // ugr: remember whether this field is locked; uiFormFields applies it to the DOM on every render
 modules/ui/sections/validation_rules.js:8:// ugr: our rules are not listed as user toggles
 modules/ui/sections/validation_rules.js:22:        // ugr: hide our rules, which can't be switched off
-modules/ui/preset_list.js:14:// ugr: a locked feature's type can't be changed; a type change keeps ugr:* and read-only tags
+modules/ui/preset_list.js:14:// ugr: a locked feature's type can't be changed; a type change keeps backend-owned ugr:* and read-only tags
 modules/ui/preset_list.js:410:            // ugr: a locked feature's type can't be changed (the list also opens for a locked way's untagged vertex)
-modules/ui/preset_list.js:423:                        // ugr: the new type can't remove or change ugr:* and read-only tags, nor add them
+modules/ui/preset_list.js:423:                        // ugr: the new type can't remove or change backend-owned ugr:* and read-only tags, nor add them
 modules/ui/entity_editor.js:9:// ugr: locked features and read-only fields can't be edited
 modules/ui/entity_editor.js:78:        // ugr: a locked feature's type can't be changed
 modules/ui/entity_editor.js:118:            // ugr: the raw tag editor shows locked and read-only tags as read-only
-modules/ui/entity_editor.js:168:        // ugr: never change locked features, ugr:* tags or read-only tags. Some fields (e.g.
+modules/ui/entity_editor.js:168:        // ugr: never change locked features, backend-owned ugr:* tags or read-only tags. Some fields (e.g.
 modules/ui/commit.js:18:// ugr: deleting a locked feature can't be saved
 modules/ui/commit.js:456:        // ugr: the validator never sees deleted entities, so a locked feature deleted through any path blocks saving here
 modules/ui/sections/data_layers.js:71:        // ugr: no OSM Notes layer
