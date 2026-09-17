@@ -4,7 +4,10 @@ describe('iD.ugr inspector guards', function () {
     var graph;
     var rules = {
         version: 1,
-        presets: { 'ugr/tree': { geometry: ['point', 'vertex'], tags: { natural: 'tree' }, read_only: ['condition'] } }
+        presets: {
+            'ugr/tree': { geometry: ['point', 'vertex'], tags: { natural: 'tree' }, read_only: ['condition'], allowed: ['ugr:location_type'] },
+            'ugr/park': { geometry: ['area'], tags: { leisure: 'park' }, allowed: ['ugr:maintenance_category'] }
+        }
     };
 
     beforeEach(function () {
@@ -35,8 +38,22 @@ describe('iD.ugr inspector guards', function () {
         var patterns = iD.ugrReadOnlyTagPatterns(['n3'], graph);
         expect(matchesAny(patterns, 'condition')).toBe(true);
         expect(matchesAny(patterns, 'ugr:parcel')).toBe(true);
+        expect(matchesAny(patterns, 'ugr:locked')).toBe(true);
         expect(matchesAny(patterns, 'species')).toBe(false);
         expect(matchesAny(patterns, 'conditions')).toBe(false);
+    });
+
+    it('leaves ugr: attributes that the rules declare, for any type, editable in the tag editor', function () {
+        var patterns = iD.ugrReadOnlyTagPatterns(['n3'], graph);
+        expect(matchesAny(patterns, 'ugr:location_type')).toBe(false);
+        expect(matchesAny(patterns, 'ugr:maintenance_category')).toBe(false);
+        expect(matchesAny(patterns, 'ugr:location_type_code')).toBe(true);
+        expect(matchesAny(patterns, 'ugr:location')).toBe(true);
+    });
+
+    it('makes every ugr:* tag read-only when no rules are loaded', function () {
+        iD.ugrSetRules(null);
+        expect(matchesAny(iD.ugrReadOnlyTagPatterns(['n3'], graph), 'ugr:location_type')).toBe(true);
     });
 
     it('locks fields of locked features and read-only fields', function () {
@@ -47,8 +64,20 @@ describe('iD.ugr inspector guards', function () {
 
     it('drops tag changes to locked features, ugr:* keys and read-only keys', function () {
         expect(iD.ugrAllowedTagChanges({ landuse: 'grass' }, ['w1'], graph)).toEqual({});
-        expect(iD.ugrAllowedTagChanges({ species: 'unknown', condition: 'poor', 'ugr:locked': 'yes' }, ['n3'], graph))
+        expect(iD.ugrAllowedTagChanges({ species: 'unknown', condition: 'poor', 'ugr:locked': 'yes', 'ugr:parcel': '1' }, ['n3'], graph))
             .toEqual({ species: 'unknown' });
+    });
+
+    it('keeps changes to ugr: attributes that the rules declare, for any type', function () {
+        expect(iD.ugrAllowedTagChanges({ 'ugr:location_type': 'sidewalk', 'ugr:maintenance_category': 'I', 'ugr:parcel': '1' }, ['n3'], graph))
+            .toEqual({ 'ugr:location_type': 'sidewalk', 'ugr:maintenance_category': 'I' });
+        expect(iD.ugrAllowedTagChanges({ 'ugr:location_type': undefined }, ['n3'], graph)).toEqual({ 'ugr:location_type': undefined });
+        expect(iD.ugrAllowedTagChanges({ 'ugr:location_type': 'sidewalk' }, ['w1'], graph)).toEqual({});
+    });
+
+    it('drops changes to every ugr:* key when no rules are loaded', function () {
+        iD.ugrSetRules(null);
+        expect(iD.ugrAllowedTagChanges({ 'ugr:location_type': 'sidewalk', species: 'unknown' }, ['n3'], graph)).toEqual({ species: 'unknown' });
     });
 
     it('keeps key removals that are allowed', function () {
@@ -70,6 +99,22 @@ describe('iD.ugr inspector guards', function () {
         var working = Object.assign({}, original);
         var allowed = iD.ugrAllowedTagChanges(change, ['n3'], graph);
         expect(allowed(working)).toEqual({ natural: 'tree', species: 'unknown', condition: 'good' });
+    });
+
+    it('lets a function change set and remove declared ugr: attributes', function () {
+        var allowed = iD.ugrAllowedTagChanges(function (tags) {
+            tags['ugr:location_type'] = 'sidewalk';
+            tags['ugr:parcel'] = '1';
+            return tags;
+        }, ['n3'], graph);
+        expect(allowed({ natural: 'tree' })).toEqual({ natural: 'tree', 'ugr:location_type': 'sidewalk' });
+
+        var removal = iD.ugrAllowedTagChanges(function (tags) {
+            delete tags['ugr:location_type'];
+            delete tags['ugr:parcel'];
+            return tags;
+        }, ['n3'], graph);
+        expect(removal({ natural: 'tree', 'ugr:location_type': 'sidewalk', 'ugr:parcel': '1' })).toEqual({ natural: 'tree', 'ugr:parcel': '1' });
     });
 
     it('treats a function change that returns nothing as no change', function () {

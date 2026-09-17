@@ -1,7 +1,7 @@
 import { actionDeleteNode } from '../../actions/delete_node';
 import { actionDeleteWay } from '../../actions/delete_way';
 import { geoChooseEdge } from '../../geo/geom';
-import { ugrHasLockTag, ugrIsLocked } from './is_locked';
+import { ugrBackendKeyTest, ugrHasLockTag, ugrIsLocked } from './is_locked';
 
 // A segment [nodeIDa, nodeIDb] (either order) is locked when a locked way has the two nodes next to each other.
 // iD's actionAddMidpoint inserts the new vertex into every way with that segment, not only the targeted way.
@@ -45,9 +45,10 @@ export function ugrSnapNodes(datum, graph) {
     return properties.nodes;
 }
 
-// A dragged node may join a locked node only if nothing would merge into the locked node.
+// A dragged node may join a locked node only if nothing would merge into the locked node: it carries no tags but
+// backend-owned ugr:* keys, which the attach drops.
 export function ugrCanAttachToLocked(node) {
-    return Object.keys(node.tags || {}).every(key => key.startsWith('ugr:'));
+    return Object.keys(node.tags || {}).every(ugrBackendKeyTest());
 }
 
 // Like actionConnect, but the locked node always survives unchanged.

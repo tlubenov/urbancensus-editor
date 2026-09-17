@@ -50,6 +50,27 @@ describe('iD.ugrIsLocked', function () {
         expect(iD.ugrStripTags({ 'ugr:locked': 'yes', 'ugr:parcel': '1', landuse: 'grass' })).toEqual({ landuse: 'grass' });
     });
 
+    describe('with rules that declare ugr: attributes', function () {
+        beforeEach(function () {
+            iD.ugrSetRules({
+                version: 1,
+                presets: {
+                    'ugr/grass': { geometry: ['area'], tags: { landuse: 'grass' }, allowed: ['ugr:maintenance_category', 'ugr:locked'] },
+                    'ugr/tree': { geometry: ['point'], tags: { natural: 'tree' }, allowed: ['ugr:location_type'] }
+                }
+            });
+        });
+
+        afterEach(function () {
+            iD.ugrSetRules(null);
+        });
+
+        it('strips only the ugr:* tags that the rules do not declare, and always the lock tag', function () {
+            expect(iD.ugrStripTags({ 'ugr:locked': 'yes', 'ugr:parcel': '1', 'ugr:maintenance_category': 'I', 'ugr:location_type': 'square', landuse: 'grass' }))
+                .toEqual({ 'ugr:maintenance_category': 'I', 'ugr:location_type': 'square', landuse: 'grass' });
+        });
+    });
+
     it('names the lock key', function () {
         expect(iD.ugrLockKey).toBe('ugr:locked');
     });

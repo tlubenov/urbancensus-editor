@@ -3,7 +3,10 @@ import { select as d3_select } from 'd3-selection';
 describe('iD.ugr preset changes', function () {
     var rules = {
         version: 1,
-        presets: { 'ugr/tree': { geometry: ['point', 'vertex'], tags: { natural: 'tree' }, read_only: ['condition'] } }
+        presets: {
+            'ugr/tree': { geometry: ['point', 'vertex'], tags: { natural: 'tree' }, read_only: ['condition'], allowed: ['ugr:location_type'] },
+            'ugr/grass': { geometry: ['area'], tags: { landuse: 'grass' }, allowed: ['ugr:maintenance_category'] }
+        }
     };
 
     function lockedParcelAndTree() {
@@ -77,6 +80,16 @@ describe('iD.ugr preset changes', function () {
             iD.ugrPreserveProtectedTags(before, after, ['n6'], graph);
             expect(after).toEqual({ natural: 'shrub' });
             expect(before).toEqual(graph.entity('n6').tags);
+        });
+
+        it('lets the change set, alter or remove ugr: attributes that the rules declare, and still keeps the others', function () {
+            var before = { natural: 'tree', species: 'Tilia cordata', 'ugr:parcel': '12', 'ugr:location_type': 'sidewalk' };
+            var entity = graph.entity('n6').update({ tags: before });
+            var changed = graph.replace(entity);
+            expect(iD.ugrPreserveProtectedTags(before, { natural: 'shrub', species: 'Tilia cordata' }, ['n6'], changed))
+                .toEqual({ natural: 'shrub', species: 'Tilia cordata', 'ugr:parcel': '12' });
+            expect(iD.ugrPreserveProtectedTags(before, { natural: 'shrub', 'ugr:location_type': 'square', 'ugr:maintenance_category': 'I' }, ['n6'], changed))
+                .toEqual({ natural: 'shrub', 'ugr:location_type': 'square', 'ugr:maintenance_category': 'I', 'ugr:parcel': '12' });
         });
     });
 

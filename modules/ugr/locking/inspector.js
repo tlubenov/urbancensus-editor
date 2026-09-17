@@ -1,9 +1,9 @@
 import { deepEqual } from 'fast-equals';
 
-import { ugrReadOnlyKeys } from '../rules/evaluate';
+import { ugrDeclaredKeys, ugrReadOnlyKeys } from '../rules/evaluate';
 import { ugrFeatureFor } from '../rules/feature';
 import { ugrRules } from '../rules/store';
-import { ugrAnyLocked } from './is_locked';
+import { ugrAnyLocked, ugrBackendKeyTest } from './is_locked';
 
 function escapeRegExp(text) {
     return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -20,10 +20,18 @@ export function ugrReadOnlyKeysFor(entityIDs, graph) {
     return [...keys];
 }
 
-// Patterns for the raw tag editor's readOnlyTags(): everything for locked features; otherwise ugr:* and read-only keys.
+// The keys ugrBackendKeyTest accepts, as a pattern: ugr:* except the attributes the rules declare.
+function backendKeyPattern() {
+    const rules = ugrRules();
+    const declared = rules ? [...ugrDeclaredKeys(rules)].filter(key => key.startsWith('ugr:')) : [];
+    return declared.length ? new RegExp(`^(?!(?:${declared.map(escapeRegExp).join('|')})$)ugr:`) : /^ugr:/;
+}
+
+// Patterns for the raw tag editor's readOnlyTags(): everything for locked features; otherwise backend-owned ugr:* keys
+// and read-only keys.
 export function ugrReadOnlyTagPatterns(entityIDs, graph) {
     if (ugrAnyLocked(entityIDs, graph)) return [/.*/];
-    return [/^ugr:/].concat(ugrReadOnlyKeysFor(entityIDs, graph).map(key => new RegExp(`^${escapeRegExp(key)}$`)));
+    return [backendKeyPattern()].concat(ugrReadOnlyKeysFor(entityIDs, graph).map(key => new RegExp(`^${escapeRegExp(key)}$`)));
 }
 
 export function ugrFieldLocked(field, entityIDs, graph) {
@@ -32,13 +40,13 @@ export function ugrFieldLocked(field, entityIDs, graph) {
     return [field.key].concat(field.keys || []).filter(Boolean).some(key => readOnly.includes(key));
 }
 
-// A copy of `after` in which ugr:* keys and `readOnly` keys are as in `before`: a key present before gets its value
-// back, a key absent before is removed.
+// A copy of `after` in which backend-owned ugr:* keys and `readOnly` keys are as in `before`: a key present before gets
+// its value back, a key absent before is removed.
 function restoreProtectedKeys(before, after, readOnly) {
     const result = Object.assign({}, after);
     const protectedKeys = new Set(readOnly);
     Object.keys(before).concat(Object.keys(result))
-        .filter(key => key.startsWith('ugr:'))
+        .filter(ugrBackendKeyTest())
         .forEach(key => protectedKeys.add(key));
     protectedKeys.forEach(key => {
         if (key in before) result[key] = before[key];
@@ -47,13 +55,14 @@ function restoreProtectedKeys(before, after, readOnly) {
     return result;
 }
 
-// A change of feature type (actionChangePreset) may remove or add any key; ugr:* and read-only keys stay as they were.
+// A change of feature type (actionChangePreset) may remove or add any key; backend-owned ugr:* keys and read-only keys
+// stay as they were. Declared ugr: attributes are ordinary attributes here.
 // `graph` is the graph before the change, where the read-only keys of `entityIDs` are looked up.
 export function ugrPreserveProtectedTags(beforeTags, afterTags, entityIDs, graph) {
     return restoreProtectedKeys(beforeTags, afterTags, ugrReadOnlyKeysFor(entityIDs, graph));
 }
 
-// Wraps a tag-changing action on one entity (e.g. actionChangePreset) so that it keeps ugr:* and read-only keys.
+// Wraps a tag-changing action on one entity (e.g. actionChangePreset) so that it keeps backend-owned ugr:* and read-only keys.
 export function ugrActionPreserveProtectedTags(entityID, action) {
     return function (graph) {
         const before = graph.entity(entityID).tags;
@@ -72,7 +81,8 @@ export function ugrApplyPresetChangeLock(buttons, entityIDs, graph) {
         .property('disabled', locked);
 }
 
-// The last gate before the inspector changes tags: covers fields, the raw tag editor and its text view.
+// The last gate before the inspector changes tags: covers fields, the raw tag editor and its text view. Backend-owned
+// ugr:* keys and read-only keys never change; ugr: attributes that the rules declare do.
 export function ugrAllowedTagChanges(changed, entityIDs, graph) {
     if (ugrAnyLocked(entityIDs, graph)) return {};
     const readOnly = ugrReadOnlyKeysFor(entityIDs, graph);
@@ -86,9 +96,10 @@ export function ugrAllowedTagChanges(changed, entityIDs, graph) {
             return restoreProtectedKeys(before, returned === undefined ? before : returned, readOnly);
         };
     }
+    const backendKey = ugrBackendKeyTest();
     const allowed = {};
     for (const key in changed) {
-        if (key.startsWith('ugr:') || readOnly.includes(key)) continue;
+        if (backendKey(key) || readOnly.includes(key)) continue;
         allowed[key] = changed[key];
     }
     return allowed;

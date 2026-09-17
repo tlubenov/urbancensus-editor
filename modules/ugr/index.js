@@ -4,7 +4,7 @@ export { ugrAnyLocked, ugrHasLockTag, ugrIsLocked, ugrLockKey, ugrStripTags } fr
 export { ugrActionPreserveProtectedTags, ugrAllowedTagChanges, ugrApplyFieldLocks, ugrApplyPresetChangeLock, ugrFieldLocked, ugrPreserveProtectedTags, ugrReadOnlyKeysFor, ugrReadOnlyTagPatterns } from './locking/inspector';
 export { ugrDisableLockedFixes, ugrGuardOperation } from './locking/operations';
 export { ugrActionAttachToLocked, ugrCanAttachToLocked, ugrChosenEdgeLocked, ugrDragBlocked, ugrDrawTarget, ugrEdgeLocked, ugrSnapNodes } from './locking/editing';
-export { ugrDisallowedKeys, ugrEvaluate, ugrMatchPreset, ugrPointInBoundary, ugrReadOnlyKeys } from './rules/evaluate';
+export { ugrDeclaredKeys, ugrDisallowedKeys, ugrEvaluate, ugrMatchPreset, ugrPointInBoundary, ugrReadOnlyKeys } from './rules/evaluate';
 export { ugrLoadRules, ugrRules, ugrRulesReady, ugrRulesRequired, ugrSetRules } from './rules/store';
 export { ugrStartRules } from './rules/start';
 export { ugrFeatureFor } from './rules/feature';

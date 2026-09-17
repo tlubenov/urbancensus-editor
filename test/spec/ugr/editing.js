@@ -70,6 +70,18 @@ describe('iD.ugr editing guards', function () {
         it('refuses a tagged node, whose tags would merge into the locked node', function () {
             expect(iD.ugrCanAttachToLocked(graph.entity('n10'))).toBe(false);
         });
+        it('allows a node carrying only ugr:* tags that belong to the backend', function () {
+            expect(iD.ugrCanAttachToLocked(new iD.osmNode({ id: 'n11', tags: { 'ugr:parcel': '1' } }))).toBe(true);
+        });
+        it('refuses a node carrying a ugr: attribute that the rules declare', function () {
+            iD.ugrSetRules({ version: 1, presets: { 'ugr/tree': { geometry: ['point', 'vertex'], tags: { natural: 'tree' }, allowed: ['ugr:location_type'] } } });
+            try {
+                expect(iD.ugrCanAttachToLocked(new iD.osmNode({ id: 'n11', tags: { 'ugr:parcel': '1', 'ugr:location_type': 'sidewalk' } }))).toBe(false);
+                expect(iD.ugrCanAttachToLocked(new iD.osmNode({ id: 'n12', tags: { 'ugr:parcel': '1' } }))).toBe(true);
+            } finally {
+                iD.ugrSetRules(null);
+            }
+        });
     });
 
     describe('ugrActionAttachToLocked', function () {

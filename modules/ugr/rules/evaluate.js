@@ -67,7 +67,26 @@ const SYSTEM_KEYS = ['type', 'area'];
 const NUMBER = /^-?[0-9]+(\.[0-9]+)?$/;
 const INTEGER = /^-?[0-9]+$/;
 
-function allowedKeys(rules, feature) {
+// Only spaces, tabs and line breaks around a value are ignored: String.prototype.trim and Python's str.strip remove
+// different Unicode characters, and the twin must return the same codes.
+function trimBlanks(value) {
+    return value.replace(/^[ \t\n\r]+|[ \t\n\r]+$/g, '');
+}
+
+// The attribute keys the rules declare for some register type: any preset's `required`, `required_any` and `allowed`
+// keys, and `common_allowed`; never the lock tag. A `ugr:` key that isn't declared belongs to the backend: the editor
+// doesn't let users change it, and the allowed-key rule allows it on every feature.
+export function ugrDeclaredKeys(rules) {
+    const keys = new Set(rules.common_allowed || []);
+    for (const preset of Object.values(rules.presets || {})) {
+        [...(preset.required || []), ...(preset.required_any || []).flat(), ...(preset.allowed || [])].forEach(key => keys.add(key));
+    }
+    keys.delete(rules.lock_tag || 'ugr:locked');
+    return keys;
+}
+
+// A test for the keys a feature may carry.
+function allowedKey(rules, feature) {
     const allowed = new Set([rules.lock_tag || 'ugr:locked', ...SYSTEM_KEYS, ...(rules.common_allowed || [])]);
     const presetID = ugrMatchPreset(rules, feature);
     if (presetID) {
@@ -80,20 +99,24 @@ function allowedKeys(rules, feature) {
             ...(preset.allowed || [])
         ].forEach(key => allowed.add(key));
     }
-    return allowed;
+    const declared = ugrDeclaredKeys(rules);
+    // Backend-owned ugr: keys are allowed on every feature, like the system keys.
+    return key => allowed.has(key) || (key.startsWith('ugr:') && !declared.has(key));
 }
 
 // The keys a feature may not carry, sorted. Callers skip locked features before asking.
 export function ugrDisallowedKeys(rules, feature) {
-    const allowed = allowedKeys(rules, feature);
-    return Object.keys(feature.tags || {}).filter(key => !allowed.has(key)).sort();
+    const allowed = allowedKey(rules, feature);
+    return Object.keys(feature.tags || {}).filter(key => !allowed(key)).sort();
 }
 
+// A bound that isn't a number doesn't limit the value (the build in urban-green-register refuses such ranges).
 function outOfRange(range, value) {
-    const text = typeof value === 'string' ? value.trim() : '';
-    if (!(range.integer ? INTEGER : NUMBER).test(text)) return true;
+    const bounds = range !== null && typeof range === 'object' ? range : {};
+    const text = typeof value === 'string' ? trimBlanks(value) : '';
+    if (!(bounds.integer ? INTEGER : NUMBER).test(text)) return true;
     const number = Number(text);
-    return number < range.min || number > range.max;
+    return (typeof bounds.min === 'number' && number < bounds.min) || (typeof bounds.max === 'number' && number > bounds.max);
 }
 
 export function ugrEvaluate(rules, feature) {
@@ -101,7 +124,7 @@ export function ugrEvaluate(rules, feature) {
     if (tags[rules.lock_tag || 'ugr:locked'] === 'yes') return [];
 
     const codes = new Set();
-    const has = key => typeof tags[key] === 'string' && tags[key].trim() !== '';
+    const has = key => typeof tags[key] === 'string' && trimBlanks(tags[key]) !== '';
 
     const presetID = ugrMatchPreset(rules, feature);
     if (presetID) {

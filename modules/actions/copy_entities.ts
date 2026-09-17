@@ -17,7 +17,7 @@ export function actionCopyEntities(
         });
 
         for (const id in _copies) {
-            // ugr: drop ugr:* tags (such as ugr:locked) so a copied parcel becomes an editable feature
+            // ugr: drop backend-owned ugr:* tags (such as ugr:locked) so a copied parcel becomes an editable feature; declared ugr: attributes stay
             _copies[<EntityId>id] = _copies[<EntityId>id].update({ tags: ugrStripTags(_copies[<EntityId>id].tags) });
             graph = graph.replace(_copies[<EntityId>id]);
         }

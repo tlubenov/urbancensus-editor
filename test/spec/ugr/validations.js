@@ -9,7 +9,7 @@ describe('iD.validationUgr', function () {
         boundary: { type: 'MultiPolygon', coordinates: [[[[23.20, 42.60], [23.45, 42.60], [23.45, 42.80], [23.20, 42.80], [23.20, 42.60]]]] },
         presets: {
             'ugr/tree': { geometry: ['point', 'vertex'], tags: { natural: 'tree' }, required_any: [['species', 'genus']], read_only: ['condition'], allowed: ['height'] },
-            'ugr/hedge': { geometry: ['line', 'area'], tags: { barrier: 'hedge' } }
+            'ugr/hedge': { geometry: ['line', 'area'], tags: { barrier: 'hedge' }, allowed: ['ugr:maintenance_category'] }
         },
         code_fields: { genus: 'genus', species: 'species' },
         code_lists: { genus: ['Tilia', 'unknown'], species: ['Tilia cordata', 'unknown'] },
@@ -88,6 +88,23 @@ describe('iD.validationUgr', function () {
         fixes[0].onClick(context);
         expect(context.entity('n-1').tags).toEqual({ natural: 'tree', genus: 'Tilia', height: '12' });
         expect(issues(iD.validationUgrTagNotAllowed)).toHaveLength(0);
+    });
+
+    it('never flags ugr: keys the rules do not declare, and the fix leaves them in place', function () {
+        addTree({ natural: 'tree', genus: 'Tilia', 'ugr:reference': 'R-1', 'ugr:parcel': '68134.409.76' });
+        expect(issues(iD.validationUgrTagNotAllowed)).toHaveLength(0);
+
+        context.perform(iD.actionChangeTags('n-1', Object.assign({}, context.entity('n-1').tags, { colour: 'green' })));
+        issues(iD.validationUgrTagNotAllowed)[0].fixes(context)[0].onClick(context);
+        expect(context.entity('n-1').tags).toEqual({ natural: 'tree', genus: 'Tilia', 'ugr:reference': 'R-1', 'ugr:parcel': '68134.409.76' });
+    });
+
+    it('flags a declared ugr: attribute that the type does not allow, and the fix removes it', function () {
+        addTree({ natural: 'tree', genus: 'Tilia', 'ugr:maintenance_category': 'I' });
+        var found = issues(iD.validationUgrTagNotAllowed);
+        expect(found).toHaveLength(1);
+        found[0].fixes(context)[0].onClick(context);
+        expect(context.entity('n-1').tags).toEqual({ natural: 'tree', genus: 'Tilia' });
     });
 
     it('names the keys in the message', function () {

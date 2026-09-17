@@ -165,7 +165,7 @@ export function uiEntityEditor(context) {
     // history operation when the user leaves the field.  #2342
     // Use explicit entityIDs in case the selection changes before the event is fired.
     function changeTags(entityIDs, changed, onInput) {
-        // ugr: never change locked features, ugr:* tags or read-only tags. Some fields (e.g.
+        // ugr: never change locked features, backend-owned ugr:* tags or read-only tags. Some fields (e.g.
         // multi-key or directional-combo) dispatch a callback instead of a tags object; only
         // an object can be checked for "nothing left to change".
         changed = ugrAllowedTagChanges(changed, entityIDs, context.graph());

@@ -167,5 +167,68 @@ describe('iD.ugrEvaluate', function () {
             expect(iD.ugrEvaluate({ presets: {} }, feature('point', { building: 'yes' }, [inside]))).toEqual(['ugr_tag_not_allowed']);
             expect(iD.ugrEvaluate(attributeRules, feature('area', { 'ugr:locked': 'yes', 'ugr:parcel': '1', landuse: 'residential' }, [inside]))).toEqual([]);
         });
+
+        it('trims only spaces, tabs and line breaks around a number', function () {
+            expect(iD.ugrEvaluate(attributeRules, tree({ height: ' \t12\n' }))).toEqual([]);
+            expect(iD.ugrEvaluate(attributeRules, tree({ height: '\r12\r\n' }))).toEqual([]);
+            [' 12', '﻿12', '12', '12', '12 '].forEach(function (value) {
+                expect(iD.ugrEvaluate(attributeRules, tree({ height: value }))).toEqual(['ugr_value_out_of_range']);
+            });
+        });
+
+        it('counts a value as blank only when it is made of spaces, tabs and line breaks', function () {
+            expect(iD.ugrEvaluate(attributeRules, feature('area', { leisure: 'park', name: ' \t\r\n' }, [inside]))).toEqual(['ugr_missing_required']);
+            expect(iD.ugrEvaluate(attributeRules, feature('area', { leisure: 'park', name: '﻿' }, [inside]))).toEqual([]);
+            expect(iD.ugrEvaluate(attributeRules, feature('area', { leisure: 'park', name: ' ' }, [inside]))).toEqual([]);
+        });
+
+        it('ignores a range bound that is not a number, and a range that is not an object', function () {
+            var malformed = Object.assign({}, attributeRules, { ranges: {
+                height: { max: '10' },
+                'ugr:stem_diameter_cm': null,
+                start_date: { min: true, max: 2026, integer: true }
+            } });
+            expect(iD.ugrEvaluate(malformed, tree({ height: '12', 'ugr:stem_diameter_cm': '30.5', start_date: '1500' }))).toEqual([]);
+            expect(iD.ugrEvaluate(malformed, tree({ height: 'tall' }))).toEqual(['ugr_value_out_of_range']);
+            expect(iD.ugrEvaluate(malformed, tree({ 'ugr:stem_diameter_cm': 'wide' }))).toEqual(['ugr_value_out_of_range']);
+            expect(iD.ugrEvaluate(malformed, tree({ start_date: '1500.5' }))).toEqual(['ugr_value_out_of_range']);
+            expect(iD.ugrEvaluate(malformed, tree({ start_date: '2027' }))).toEqual(['ugr_value_out_of_range']);
+        });
+    });
+
+    describe('the ugr: namespace', function () {
+        var namespaceRules = {
+            version: 1,
+            lock_tag: 'ugr:locked',
+            presets: {
+                'ugr/tree': { geometry: ['point', 'vertex'], tags: { natural: 'tree', 'ugr:kind': 'tree' }, required_any: [['genus', 'ugr:genus_code']], read_only: ['ugr:survey_id'], allowed: ['ugr:location_type'] },
+                'ugr/park': { geometry: ['area'], tags: { leisure: 'park' }, required: ['ugr:park_code'], allowed: ['ugr:maintenance_category', 'ugr:locked'] }
+            },
+            common_allowed: ['note', 'ugr:note_ref'],
+            code_fields: { genus: 'genus' },
+            code_lists: { genus: ['Tilia', 'unknown'] }
+        };
+
+        function tree(tags) {
+            return feature('point', Object.assign({ natural: 'tree', 'ugr:kind': 'tree', genus: 'Tilia' }, tags), [inside]);
+        }
+
+        it('declares the keys of every type\'s required, required_any and allowed, and common_allowed, never the lock tag', function () {
+            expect(Array.from(iD.ugrDeclaredKeys(namespaceRules)).sort())
+                .toEqual(['genus', 'note', 'ugr:genus_code', 'ugr:location_type', 'ugr:maintenance_category', 'ugr:note_ref', 'ugr:park_code']);
+            expect(Array.from(iD.ugrDeclaredKeys({ presets: {} }))).toEqual([]);
+        });
+
+        it('never flags ugr: keys the rules do not declare, on matched and unmatched features', function () {
+            expect(iD.ugrEvaluate(namespaceRules, tree({ 'ugr:reference': 'R-1', 'ugr:parcel': '68134.409.76', 'ugr:locked': 'no', 'ugr:survey_id': '7' }))).toEqual([]);
+            expect(iD.ugrEvaluate(namespaceRules, feature('line', { 'ugr:reference': 'R-1', note: 'n' }, [inside]))).toEqual([]);
+            expect(iD.ugrDisallowedKeys(namespaceRules, feature('area', { building: 'yes', 'ugr:parcel': '1' }, [inside]))).toEqual(['building']);
+        });
+
+        it('flags a declared ugr: attribute where the feature\'s type does not allow it', function () {
+            expect(iD.ugrEvaluate(namespaceRules, tree({ 'ugr:maintenance_category': 'I' }))).toEqual(['ugr_tag_not_allowed']);
+            expect(iD.ugrDisallowedKeys(namespaceRules, tree({ 'ugr:park_code': 'P1', 'ugr:note_ref': 'x' }))).toEqual(['ugr:park_code']);
+            expect(iD.ugrDisallowedKeys(namespaceRules, feature('line', { 'ugr:location_type': 'sidewalk' }, [inside]))).toEqual(['ugr:location_type']);
+        });
     });
 });

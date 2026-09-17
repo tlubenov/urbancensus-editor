@@ -11,7 +11,7 @@ import { geoExtent } from '../geo/extent';
 import { uiPresetIcon } from './preset_icon';
 import { uiTagReference } from './tag_reference';
 import { utilKeybinding, utilNoAuto, utilRebind } from '../util';
-// ugr: a locked feature's type can't be changed; a type change keeps ugr:* and read-only tags
+// ugr: a locked feature's type can't be changed; a type change keeps backend-owned ugr:* and read-only tags
 import { ugrActionPreserveProtectedTags } from '../ugr/locking/inspector';
 import { ugrAnyLocked } from '../ugr/locking/is_locked';
 
@@ -420,7 +420,7 @@ export function uiPresetList(context) {
                     for (var i in _entityIDs) {
                         var entityID = _entityIDs[i];
                         var oldPreset = presetManager.match(graph.entity(entityID), graph);
-                        // ugr: the new type can't remove or change ugr:* and read-only tags, nor add them
+                        // ugr: the new type can't remove or change backend-owned ugr:* and read-only tags, nor add them
                         graph = ugrActionPreserveProtectedTags(entityID, actionChangePreset(entityID, oldPreset, preset))(graph);
                     }
                     return graph;

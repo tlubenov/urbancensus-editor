@@ -15,6 +15,23 @@ describe('iD.ugr presentation of locked features', function () {
         expect(head.entity('w1').tags['ugr:locked']).toBe('yes');
     });
 
+    it('keeps the ugr: attributes that the rules declare on pasted copies', function () {
+        iD.ugrSetRules({ version: 1, presets: { 'ugr/grass': { geometry: ['area'], tags: { landuse: 'grass' }, allowed: ['ugr:maintenance_category'] } } });
+        try {
+            var graph = new iD.coreGraph([
+                new iD.osmNode({ id: 'n1', loc: [0, 0] }),
+                new iD.osmNode({ id: 'n2', loc: [0, 1] }),
+                new iD.osmNode({ id: 'n3', loc: [1, 1] }),
+                new iD.osmWay({ id: 'w1', nodes: ['n1', 'n2', 'n3', 'n1'], tags: { 'ugr:reference': 'R-1', 'ugr:maintenance_category': 'II', landuse: 'grass' } })
+            ]);
+            var action = iD.actionCopyEntities(['w1'], graph);
+            var head = action(graph);
+            expect(head.entity(action.copies().w1.id).tags).toEqual({ 'ugr:maintenance_category': 'II', landuse: 'grass' });
+        } finally {
+            iD.ugrSetRules(null);
+        }
+    });
+
     it('adds the tag-ugr-locked class', function () {
         var classes = iD.svgTagClasses().getClassesString({ 'ugr:locked': 'yes', landuse: 'residential' }, 'way area stroke');
         expect(classes.split(' ')).toContain('tag-ugr-locked');
