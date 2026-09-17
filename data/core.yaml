@@ -1887,6 +1887,10 @@ en:
       title: Outside the municipality
     ugr_value_not_in_list:
       title: Values not in the code list
+    ugr_tag_not_allowed:
+      title: Tags that aren't allowed
+    ugr_value_out_of_range:
+      title: Values out of range
     ugr_locked_modified:
       title: Changed cadastre features
   intro:
@@ -2332,6 +2336,10 @@ en:
         message: "{feature} is outside the municipality boundary"
       ugr_value_not_in_list:
         message: "{feature} has a value that is not in the code list"
+      ugr_tag_not_allowed:
+        message: "{feature} has tags that aren't allowed: {keys}"
+      ugr_value_out_of_range:
+        message: "{feature} has a value outside the allowed range"
       ugr_locked_modified:
         message: A cadastre feature has been changed
       fix:
@@ -2339,6 +2347,9 @@ en:
           species: "Species: unknown"
           genus: "Genus: unknown"
           annotation: Set an unknown value.
+        remove_not_allowed:
+          title: Remove tags that aren't allowed
+          annotation: Removed tags that aren't allowed.
         revert:
           title: Restore the cadastre feature
           annotation: Restored a cadastre feature.

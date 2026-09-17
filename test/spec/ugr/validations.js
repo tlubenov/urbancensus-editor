@@ -1,3 +1,5 @@
+import { select as d3_select } from 'd3-selection';
+
 describe('iD.validationUgr', function () {
     var context;
     var rules = {
@@ -6,11 +8,12 @@ describe('iD.validationUgr', function () {
         lock_tag: 'ugr:locked',
         boundary: { type: 'MultiPolygon', coordinates: [[[[23.20, 42.60], [23.45, 42.60], [23.45, 42.80], [23.20, 42.80], [23.20, 42.60]]]] },
         presets: {
-            'ugr/tree': { geometry: ['point', 'vertex'], tags: { natural: 'tree' }, required_any: [['species', 'genus']], read_only: ['condition'] },
+            'ugr/tree': { geometry: ['point', 'vertex'], tags: { natural: 'tree' }, required_any: [['species', 'genus']], read_only: ['condition'], allowed: ['height'] },
             'ugr/hedge': { geometry: ['line', 'area'], tags: { barrier: 'hedge' } }
         },
         code_fields: { genus: 'genus', species: 'species' },
-        code_lists: { genus: ['Tilia', 'unknown'], species: ['Tilia cordata', 'unknown'] }
+        code_lists: { genus: ['Tilia', 'unknown'], species: ['Tilia cordata', 'unknown'] },
+        ranges: { height: { min: 0, max: 60 } }
     };
 
     beforeEach(function () {
@@ -67,6 +70,47 @@ describe('iD.validationUgr', function () {
         iD.ugrSetRules(null);
         addTree({ natural: 'tree' });
         expect(issues(iD.validationUgrMissingRequired)).toHaveLength(0);
+    });
+
+    it('flags a tag that is not allowed as an error', function () {
+        addTree({ natural: 'tree', genus: 'Tilia', colour: 'green' });
+        var found = issues(iD.validationUgrTagNotAllowed);
+        expect(found).toHaveLength(1);
+        expect(found[0].type).toBe('ugr_tag_not_allowed');
+        expect(found[0].severity).toBe('error');
+        expect(issues(iD.validationUgrMissingRequired)).toHaveLength(0);
+    });
+
+    it('offers a fix that removes only the tags that are not allowed', function () {
+        addTree({ natural: 'tree', genus: 'Tilia', height: '12', colour: 'green', 'name:bg': 'x' });
+        var fixes = issues(iD.validationUgrTagNotAllowed)[0].fixes(context);
+        expect(fixes).toHaveLength(1);
+        fixes[0].onClick(context);
+        expect(context.entity('n-1').tags).toEqual({ natural: 'tree', genus: 'Tilia', height: '12' });
+        expect(issues(iD.validationUgrTagNotAllowed)).toHaveLength(0);
+    });
+
+    it('names the keys in the message', function () {
+        addTree({ natural: 'tree', genus: 'Tilia', colour: 'green' });
+        var issue = issues(iD.validationUgrTagNotAllowed)[0];
+        var container = d3_select(document.createElement('div'));
+        issue.message(context)(container);
+        expect(container.text()).toContain('colour');
+    });
+
+    it('flags a value outside its range as an error without an automatic fix', function () {
+        addTree({ natural: 'tree', genus: 'Tilia', height: '120' });
+        var found = issues(iD.validationUgrValueOutOfRange);
+        expect(found).toHaveLength(1);
+        expect(found[0].type).toBe('ugr_value_out_of_range');
+        expect(found[0].severity).toBe('error');
+        expect(found[0].fixes(context)).toHaveLength(0);
+    });
+
+    it('never flags locked features for tags or ranges', function () {
+        context.perform(iD.actionAddEntity(new iD.osmNode({ id: 'n-1', loc: [23.3221, 42.6976], tags: { 'ugr:locked': 'yes', natural: 'tree', colour: 'x', height: '999' } })));
+        expect(issues(iD.validationUgrTagNotAllowed)).toHaveLength(0);
+        expect(issues(iD.validationUgrValueOutOfRange)).toHaveLength(0);
     });
 
     it('flags a changed locked feature and can revert it', function () {

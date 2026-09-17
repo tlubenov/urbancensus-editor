@@ -22,5 +22,7 @@ export {
     validationUgrLockedModified,
     validationUgrMissingRequired,
     validationUgrOutsideBoundary,
-    validationUgrValueNotInList
+    validationUgrTagNotAllowed,
+    validationUgrValueNotInList,
+    validationUgrValueOutOfRange
 } from '../ugr/validations/index';
