@@ -15,6 +15,7 @@ describe('iD.ugrEvaluate', function () {
             'ugr/hedge': { geometry: ['line', 'area'], tags: { barrier: 'hedge' } },
             'ugr/park': { geometry: ['area'], tags: { leisure: 'park' }, required: ['name'] }
         },
+        common_allowed: ['natural'],
         code_fields: { genus: 'genus', species: 'species' },
         code_lists: { genus: ['Tilia', 'unknown'], species: ['Tilia cordata', 'unknown'] }
     };
@@ -91,5 +92,80 @@ describe('iD.ugrEvaluate', function () {
         var polygon = { type: 'Polygon', coordinates: rules.boundary.coordinates[0] };
         expect(iD.ugrPointInBoundary(polygon, inside)).toBe(true);
         expect(iD.ugrPointInBoundary(polygon, outside)).toBe(false);
+    });
+
+    describe('allowed keys and ranges', function () {
+        var attributeRules = {
+            version: 1,
+            lock_tag: 'ugr:locked',
+            presets: {
+                'ugr/tree': { geometry: ['point', 'vertex'], tags: { natural: 'tree' }, required_any: [['species', 'genus']], read_only: ['condition'], allowed: ['height', 'ugr:stem_diameter_cm', 'start_date'] },
+                'ugr/park': { geometry: ['area'], tags: { leisure: 'park' }, required: ['name'], allowed: ['ugr:maintenance_category'] }
+            },
+            common_allowed: ['note'],
+            code_fields: { genus: 'genus' },
+            code_lists: { genus: ['Tilia', 'unknown'] },
+            ranges: {
+                height: { min: 0, max: 60 },
+                'ugr:stem_diameter_cm': { min: 1, max: 500, integer: true },
+                start_date: { min: 1800, max: 2026, integer: true }
+            }
+        };
+
+        function tree(tags) {
+            return feature('point', Object.assign({ natural: 'tree', genus: 'Tilia' }, tags), [inside]);
+        }
+
+        it('allows preset tags, required, required_any, read_only, allowed, common and system keys', function () {
+            expect(iD.ugrEvaluate(attributeRules, tree({ species: 'x', condition: 'good', height: '12', note: 'n', 'ugr:locked': 'no', area: 'yes', type: 'multipolygon' })))
+                .toEqual([]);
+            expect(iD.ugrEvaluate(attributeRules, feature('area', { leisure: 'park', name: 'Borisova', 'ugr:maintenance_category': 'I', note: 'n' }, [inside]))).toEqual([]);
+        });
+
+        it('flags a key that the matched type does not allow and names it', function () {
+            var f = tree({ colour: 'green', 'name:bg': 'x' });
+            expect(iD.ugrEvaluate(attributeRules, f)).toEqual(['ugr_tag_not_allowed']);
+            expect(iD.ugrDisallowedKeys(attributeRules, f)).toEqual(['colour', 'name:bg']);
+        });
+
+        it('does not let one type use another type\'s allowed keys', function () {
+            expect(iD.ugrDisallowedKeys(attributeRules, tree({ 'ugr:maintenance_category': 'I' }))).toEqual(['ugr:maintenance_category']);
+        });
+
+        it('allows only system and common keys on a feature that matches no type', function () {
+            expect(iD.ugrEvaluate(attributeRules, feature('line', { area: 'yes', note: 'n' }, [inside]))).toEqual([]);
+            expect(iD.ugrDisallowedKeys(attributeRules, feature('line', { building: 'yes', note: 'n' }, [inside]))).toEqual(['building']);
+            expect(iD.ugrEvaluate(attributeRules, feature('vertex', {}, [inside]))).toEqual([]);
+        });
+
+        it('accepts numbers at the edges of a range, with surrounding spaces', function () {
+            expect(iD.ugrEvaluate(attributeRules, tree({ height: '0', 'ugr:stem_diameter_cm': '500', start_date: '1800' }))).toEqual([]);
+            expect(iD.ugrEvaluate(attributeRules, tree({ height: ' 60 ', 'ugr:stem_diameter_cm': '1', start_date: '2026' }))).toEqual([]);
+            expect(iD.ugrEvaluate(attributeRules, tree({ height: '12.5' }))).toEqual([]);
+        });
+
+        it('flags values just outside a range', function () {
+            expect(iD.ugrEvaluate(attributeRules, tree({ height: '60.1' }))).toEqual(['ugr_value_out_of_range']);
+            expect(iD.ugrEvaluate(attributeRules, tree({ height: '-1' }))).toEqual(['ugr_value_out_of_range']);
+            expect(iD.ugrEvaluate(attributeRules, tree({ start_date: '2027' }))).toEqual(['ugr_value_out_of_range']);
+        });
+
+        it('flags a blank value, a non-number and a decimal where a whole number is required', function () {
+            expect(iD.ugrEvaluate(attributeRules, tree({ height: ' ' }))).toEqual(['ugr_value_out_of_range']);
+            expect(iD.ugrEvaluate(attributeRules, tree({ height: 'tall' }))).toEqual(['ugr_value_out_of_range']);
+            expect(iD.ugrEvaluate(attributeRules, tree({ height: '12,5' }))).toEqual(['ugr_value_out_of_range']);
+            expect(iD.ugrEvaluate(attributeRules, tree({ 'ugr:stem_diameter_cm': '30.5' }))).toEqual(['ugr_value_out_of_range']);
+            expect(iD.ugrEvaluate(attributeRules, tree({ height: '١٢' }))).toEqual(['ugr_value_out_of_range']);
+        });
+
+        it('returns every code sorted', function () {
+            expect(iD.ugrEvaluate(attributeRules, feature('point', { natural: 'tree', colour: 'x', height: '99' }, [inside])))
+                .toEqual(['ugr_missing_required', 'ugr_tag_not_allowed', 'ugr_value_out_of_range']);
+        });
+
+        it('treats missing sections as empty and still skips locked features', function () {
+            expect(iD.ugrEvaluate({ presets: {} }, feature('point', { building: 'yes' }, [inside]))).toEqual(['ugr_tag_not_allowed']);
+            expect(iD.ugrEvaluate(attributeRules, feature('area', { 'ugr:locked': 'yes', 'ugr:parcel': '1', landuse: 'residential' }, [inside]))).toEqual([]);
+        });
     });
 });

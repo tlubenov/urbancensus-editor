@@ -61,6 +61,41 @@ export function ugrReadOnlyKeys(rules, feature) {
     return id ? (rules.presets[id].read_only || []).slice() : [];
 }
 
+// Keys every feature may carry besides the lock tag: `type` (multipolygon relations) and `area` (iD adds it to some closed ways).
+const SYSTEM_KEYS = ['type', 'area'];
+// [0-9], not \d: the Python twin's \d also matches non-ASCII digits.
+const NUMBER = /^-?[0-9]+(\.[0-9]+)?$/;
+const INTEGER = /^-?[0-9]+$/;
+
+function allowedKeys(rules, feature) {
+    const allowed = new Set([rules.lock_tag || 'ugr:locked', ...SYSTEM_KEYS, ...(rules.common_allowed || [])]);
+    const presetID = ugrMatchPreset(rules, feature);
+    if (presetID) {
+        const preset = rules.presets[presetID];
+        [
+            ...Object.keys(preset.tags || {}),
+            ...(preset.required || []),
+            ...(preset.required_any || []).flat(),
+            ...(preset.read_only || []),
+            ...(preset.allowed || [])
+        ].forEach(key => allowed.add(key));
+    }
+    return allowed;
+}
+
+// The keys a feature may not carry, sorted. Callers skip locked features before asking.
+export function ugrDisallowedKeys(rules, feature) {
+    const allowed = allowedKeys(rules, feature);
+    return Object.keys(feature.tags || {}).filter(key => !allowed.has(key)).sort();
+}
+
+function outOfRange(range, value) {
+    const text = typeof value === 'string' ? value.trim() : '';
+    if (!(range.integer ? INTEGER : NUMBER).test(text)) return true;
+    const number = Number(text);
+    return number < range.min || number > range.max;
+}
+
 export function ugrEvaluate(rules, feature) {
     const tags = feature.tags || {};
     if (tags[rules.lock_tag || 'ugr:locked'] === 'yes') return [];
@@ -78,6 +113,12 @@ export function ugrEvaluate(rules, feature) {
     for (const [key, list] of Object.entries(rules.code_fields || {})) {
         if (tags[key] === undefined) continue;
         if (!((rules.code_lists || {})[list] || []).includes(tags[key])) codes.add('ugr_value_not_in_list');
+    }
+
+    if (ugrDisallowedKeys(rules, feature).length) codes.add('ugr_tag_not_allowed');
+
+    for (const [key, range] of Object.entries(rules.ranges || {})) {
+        if (tags[key] !== undefined && outOfRange(range, tags[key])) codes.add('ugr_value_out_of_range');
     }
 
     if (rules.boundary && (feature.coordinates || []).some(point => !ugrPointInBoundary(rules.boundary, point))) {
