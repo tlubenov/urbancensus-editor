@@ -164,7 +164,7 @@ describe('iD.validationUgr', function () {
 
     it('names every switched-off validation by its real type', function () {
         var types = [iD.validationOutdatedTags, iD.validationSuspiciousName, iD.validationIncompatibleSource,
-            iD.validationHelpRequest, iD.validationPrivateData, iD.validationMaprules, iD.validationMutuallyExclusiveTags]
+            iD.validationHelpRequest, iD.validationPrivateData, iD.validationMutuallyExclusiveTags]
             .map(function (fn) { return fn(context).type; });
         expect(types.sort()).toEqual(iD.ugrDisabledValidations.slice().sort());
     });

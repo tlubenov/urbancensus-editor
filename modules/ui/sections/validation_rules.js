@@ -20,7 +20,7 @@ export function uiSectionValidationRules(context) {
 
     var _ruleKeys = context.validator().getRuleKeys()
         // ugr: hide our rules, which can't be switched off
-        .filter(function(key) { return key !== 'maprules' && !ugrIsOwnRule(key); })
+        .filter(function(key) { return !ugrIsOwnRule(key); })
         .sort(function(key1, key2) {
             // alphabetize by localized title
             return t('issues.' + key1 + '.title') < t('issues.' + key2 + '.title') ? -1 : 1;

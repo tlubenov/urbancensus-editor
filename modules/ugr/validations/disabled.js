@@ -4,7 +4,6 @@ import { ugrIsLocked } from '../locking/is_locked';
 export const ugrDisabledValidations = [
     'help_request',
     'incompatible_source',
-    'maprules',
     'mutually_exclusive_tags',
     'outdated_tags',
     'private_data',
