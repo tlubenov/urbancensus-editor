@@ -18,3 +18,4 @@ export { UGR_IMPORT_MAX_BYTES, ugrCheckImport, ugrGuessImportCrs, ugrImportCount
 export { ugrActionImportPoints } from './import/action';
 export { ugrFindDuplicates } from './import/duplicates';
 export { ugrImportChangesetTags, ugrPendingImport, ugrSetPendingImport } from './import/record';
+export { ugrImportDialog } from './import/dialog';

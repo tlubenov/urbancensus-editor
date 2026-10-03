@@ -15,3 +15,21 @@ path.area.fill.tag-ugr-locked {
     pointer-events: none;
     opacity: 0.7;
 }
+
+/* ugr: the point import dialog */
+.ugr-import .ugr-import-form label {
+    display: block;
+    margin-top: 10px;
+}
+.ugr-import .ugr-import-form label span {
+    display: block;
+    font-weight: bold;
+}
+.ugr-import .ugr-import-problems {
+    max-height: 40vh;
+    overflow-y: auto;
+    color: var(--error-color, #c00);
+}
+.ugr-import .hide {
+    display: none;
+}
