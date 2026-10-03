@@ -91,8 +91,9 @@ modules/svg/midpoints.ts:81:            // ugr: a midpoint handle would let the 
 modules/validations/index.ts:19:// ugr: Urban Green Register validations (errors that block saving)
 modules/ui/commit.js:18:// ugr: deleting a locked feature can't be saved
 modules/ui/commit.js:20:// ugr: an import's changeset says what was imported, from which file, by whom and when
-modules/ui/commit.js:131:        // ugr: an import's changeset says what was imported, from which file, by whom and when
-modules/ui/commit.js:461:        // ugr: the validator never sees deleted entities, so a locked feature deleted through any path blocks saving here
+modules/ui/commit.js:60:        // ugr: a changeset left from an undone import loses the import's comment and tags
+modules/ui/commit.js:133:        // ugr: an import's changeset says what was imported, from which file, by whom and when
+modules/ui/commit.js:463:        // ugr: the validator never sees deleted entities, so a locked feature deleted through any path blocks saving here
 modules/ui/view_on_osm.js:1:// ugr: no "view on openstreetmap.org" / history link; only findLastModifiedChild is still used
 modules/ui/view_on_osm.js:5:// ugr: context is no longer used now that viewOnOSM only removes the link
 modules/ui/view_on_osm.js:11:        // ugr: no "view on openstreetmap.org" / history link
@@ -133,4 +134,4 @@ modules/behavior/draw_way.js:125:        // ugr: no snapping preview onto a lock
 .github/workflows/build.yml:6:# ugr: build our main branch, pull requests to it, and release tags
 ```
 
-Every one of the 96 lines above is a hook marker comment (`// ugr:`, `# ugr:` or `/* ugr:`); none is a bare mention of `ugr:`-prefixed text (checked by confirming no line falls outside that pattern). Some markers' own comment text mentions tag names such as `ugr:*` or `ugr:locked` (e.g. `copy_entities.ts:20`, `preset_list.js:14`), but each of those lines is still a genuine hook marker.
+Every one of the 97 lines above is a hook marker comment (`// ugr:`, `# ugr:` or `/* ugr:`); none is a bare mention of `ugr:`-prefixed text (checked by confirming no line falls outside that pattern). Some markers' own comment text mentions tag names such as `ugr:*` or `ugr:locked` (e.g. `copy_entities.ts:20`, `preset_list.js:14`), but each of those lines is still a genuine hook marker.

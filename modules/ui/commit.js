@@ -18,7 +18,7 @@ import { getIncompatibleSources } from '../validations/incompatible_source';
 // ugr: deleting a locked feature can't be saved
 import { ugrLockedDeletions } from '../ugr/validations/locked_modified';
 // ugr: an import's changeset says what was imported, from which file, by whom and when
-import { ugrImportChangesetTags } from '../ugr/import/record';
+import { ugrDropStaleImportChangeset, ugrImportChangesetTags } from '../ugr/import/record';
 
 
 var readOnlyTags = [
@@ -57,6 +57,8 @@ export function uiCommit(context) {
         _selection = selection;
 
         // Initialize changeset if one does not exist yet.
+        // ugr: a changeset left from an undone import loses the import's comment and tags
+        ugrDropStaleImportChangeset(context);
         if (!context.changeset) initChangeset();
 
         selection.call(render);

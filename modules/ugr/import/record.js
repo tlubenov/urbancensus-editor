@@ -1,3 +1,4 @@
+import { prefs } from '../../core/preferences';
 import { t } from '../../core/localizer';
 
 let _record = null;
@@ -16,6 +17,15 @@ export function ugrPendingImport(graph) {
         return entity && entity.tags['ugr:source_file'] === _record.file;
     });
     return alive ? _record : null;
+}
+
+// iD keeps a changeset when the save is cancelled. One made for an import that is now undone would give the next
+// save the import's comment and tags: drop it, and the comment iD remembered for it.
+export function ugrDropStaleImportChangeset(context) {
+    const changeset = context.changeset;
+    if (!changeset || !changeset.tags['ugr:import_file'] || ugrPendingImport(context.graph())) return;
+    if (prefs('comment') === changeset.tags.comment) prefs('comment', null);
+    context.changeset = null;
 }
 
 const CRS_ORDER = ['bgs2005', 'wgs84'];

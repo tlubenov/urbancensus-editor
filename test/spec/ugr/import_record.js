@@ -12,6 +12,18 @@ describe('iD.ugrActionImportPoints', function () {
         expect(context.hasEntity(b.id)).toBeUndefined();
         expect(context.history().hasChanges()).toBe(false);
     });
+
+    it('adds 10 000 points quickly', function () {
+        var nodes = [];
+        for (var i = 0; i < 10000; i++) nodes.push(new iD.osmNode({ loc: [23.3 + i * 1e-6, 42.7], tags: { natural: 'tree' } }));
+        var base = new iD.coreGraph();
+        var start = Date.now();
+        var graph = iD.ugrActionImportPoints(nodes)(base);
+        expect(Date.now() - start).toBeLessThan(1000);
+        expect(nodes.every(function (node) { return graph.hasEntity(node.id) === node; })).toBe(true);
+        expect(graph.frozen).toBe(true);
+        expect(base.hasEntity(nodes[0].id)).toBeUndefined();
+    });
 });
 
 describe('iD.ugrFindDuplicates', function () {
@@ -96,5 +108,58 @@ describe('iD.ugrImportChangesetTags', function () {
         pending('Tester');
         var other = context.graph().replace(a.mergeTags({ 'ugr:source_file': 'other.csv' })).replace(b.mergeTags({ 'ugr:source_file': 'other.csv' }));
         expect(iD.ugrPendingImport(other)).toBe(null);
+    });
+});
+
+describe('iD.ugrDropStaleImportChangeset', function () {
+    var context, a;
+    var importTags = { comment: 'Import of 1 point from trees.csv (1 WGS84), 2026-10-03 09:00', source: 'import', 'ugr:import_file': 'trees.csv' };
+
+    beforeEach(function () {
+        context = iD.coreContext().assetPath('../dist/').init();
+        context.mode = function () { return { id: 'browse' }; };
+        a = new iD.osmNode({ loc: [23.32, 42.69], tags: { natural: 'tree', 'ugr:source_file': 'trees.csv' } });
+        context.perform(iD.ugrActionImportPoints([a]), 'Imported');
+        iD.ugrSetPendingImport({ file: 'trees.csv', count: 1, byCrs: { wgs84: 1 }, time: new Date(), displayName: null, nodeIds: [a.id] });
+        context.changeset = new iD.osmChangeset({ tags: Object.assign({}, importTags) });
+    });
+
+    afterEach(function () {
+        iD.ugrSetPendingImport(null);
+        iD.prefs('comment', null);
+    });
+
+    it('drops a changeset left from an undone import and the remembered comment it matches', function () {
+        iD.prefs('comment', importTags.comment);
+        context.undo();
+        iD.ugrDropStaleImportChangeset(context);
+        expect(context.changeset).toBe(null);
+        expect(iD.prefs('comment')).toBe(null);
+    });
+
+    it('keeps the changeset while the import is pending', function () {
+        iD.prefs('comment', importTags.comment);
+        var changeset = context.changeset;
+        iD.ugrDropStaleImportChangeset(context);
+        expect(context.changeset).toBe(changeset);
+        expect(iD.prefs('comment')).toBe(importTags.comment);
+    });
+
+    it('leaves a changeset that is not an import\'s alone', function () {
+        var changeset = new iD.osmChangeset({ tags: { comment: 'Planted trees' } });
+        context.changeset = changeset;
+        iD.prefs('comment', 'Planted trees');
+        context.undo();
+        iD.ugrDropStaleImportChangeset(context);
+        expect(context.changeset).toBe(changeset);
+        expect(iD.prefs('comment')).toBe('Planted trees');
+    });
+
+    it('leaves a remembered comment that differs alone', function () {
+        iD.prefs('comment', 'Something else');
+        context.undo();
+        iD.ugrDropStaleImportChangeset(context);
+        expect(context.changeset).toBe(null);
+        expect(iD.prefs('comment')).toBe('Something else');
     });
 });

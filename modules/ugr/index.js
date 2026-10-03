@@ -17,6 +17,6 @@ export { UGR_REQUIRED_COLUMNS, ugrParsePoints } from './import/parse';
 export { UGR_IMPORT_MAX_BYTES, ugrCheckImport, ugrGuessImportCrs, ugrImportCounts } from './import/check';
 export { ugrActionImportPoints } from './import/action';
 export { ugrFindDuplicates } from './import/duplicates';
-export { ugrImportChangesetTags, ugrPendingImport, ugrSetPendingImport } from './import/record';
+export { ugrDropStaleImportChangeset, ugrImportChangesetTags, ugrPendingImport, ugrSetPendingImport } from './import/record';
 export { ugrImportDialog } from './import/dialog';
 export { ugrToolImport } from './import/tool';
