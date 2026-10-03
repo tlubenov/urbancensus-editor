@@ -1,4 +1,5 @@
 import { select as d3_select } from 'd3-selection';
+import { uiTopToolbar } from '../../../modules/ui/top_toolbar';
 
 describe('iD.ugrToolImport', function () {
     var context, container, div;
@@ -64,7 +65,7 @@ describe('iD.ugrToolImport', function () {
 
     it('sits in the top toolbar', function () {
         var bar = container.append('div').attr('class', 'top-toolbar');
-        bar.call(iD.uiTopToolbar(context));
+        bar.call(uiTopToolbar(context));
         expect(bar.selectAll('.ugr-import-button').size()).toBe(1);
     });
 });
