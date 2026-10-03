@@ -8,6 +8,9 @@ Design: `docs/superpowers/specs/2026-09-16-editor-fork-design.md` in `urban-gree
 - Our code: `modules/ugr/`; tests: `test/spec/ugr/`; styles: `css/90_ugr.css`; English strings: the `ugr:` block at the end of `data/core.yaml`.
 - Every change to an iD file is marked on the line above with `// ugr:` (JS/TS), `# ugr:` (YAML) or `/* ugr: */` (CSS).
   List them all with: `grep -rn "ugr: " modules config data/core.yaml css .github | grep -v "^modules/ugr/"`
+- Runtime dependency we added: `proj4` (the point import's BGS2005 → WGS84 conversion, `modules/ugr/import/crs.js`).
+  When merging iD, keep it in `package.json` and resolve `package-lock.json` by re-running `npm install` in Docker,
+  then check the lock diff touches only what changed — npm 10 drops iD's `"libc"` entries if allowed.
 
 ## Running things
 
