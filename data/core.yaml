@@ -2365,3 +2365,61 @@ en:
     about:
       credits: "Based on iD (ISC) · Cadastre: АГКК · Imagery: municipal orthophotos"
       version: "Based on iD {version}"
+    import:
+      button: Import points
+      tooltip: Import points from a CSV or TXT file
+      disabled_rules: Waiting for the rules to load
+      disabled_edits: Save or undo your edits before importing points
+      title: Import points
+      file_help: "A CSV or TXT file in UTF-8 with a header row. Columns: id, x, y, and optionally crs, type, accuracy."
+      axes: "x is the easting or longitude; y is the northing or latitude."
+      crs: Coordinate system for rows without one
+      crs_none: Choose…
+      crs_wgs84: WGS84 (degrees)
+      crs_bgs2005: BGS2005 (metres)
+      accuracy: Default accuracy (m)
+      problems_title:
+        one: "{n} problem – nothing has been added"
+        other: "{n} problems – nothing has been added"
+      at_line: "Line {line}: {message}"
+      at_line_column: "Line {line}, {column}: {message}"
+      choose_another: Choose another file
+      cancel: Cancel
+      summary:
+        one: "{count} point – {types} – {crs}"
+        other: "{count} points – {types} – {crs}"
+      ignored_columns: "Ignored columns: {columns}"
+      duplicates:
+        one: "{count} point from this file is already on the map: {ids}"
+        other: "{count} points from this file are already on the map: {ids}"
+      skip_duplicates: Skip the points already on the map
+      add:
+        one: "Add {count} point to the map"
+        other: "Add {count} points to the map"
+      annotation:
+        one: "Imported {count} point from {file}."
+        other: "Imported {count} points from {file}."
+      comment:
+        one: "Import of {count} point from {file} ({crs}) by {user}, {time}"
+        other: "Import of {count} points from {file} ({crs}) by {user}, {time}"
+      comment_no_user:
+        one: "Import of {count} point from {file} ({crs}), {time}"
+        other: "Import of {count} points from {file} ({crs}), {time}"
+      problem:
+        not_utf8: "The file isn't UTF-8 – save it as UTF-8 and try again"
+        empty_file: The file has no points
+        no_header: "The first row must be a header: id, x, y"
+        missing_column: "Column {column} is missing"
+        too_large: The file is larger than 5 MB
+        too_many: "The file has {count} points; at most {max} fit in one changeset – split the file"
+        required: is empty
+        duplicate_id: "repeats the id on line {line}"
+        not_number: is not a number
+        crs_unknown: is not wgs84 or bgs2005
+        crs_missing: is empty and no coordinate system is chosen
+        type_unknown: "{type} is not a point type"
+        accuracy_invalid: is not a number greater than zero
+        accuracy_missing: is empty and no default accuracy is set
+        outside_bulgaria: is outside Bulgaria
+        maybe_swapped: "is outside Bulgaria – x and y may be swapped"
+        outside_boundary: is outside the municipality boundary
