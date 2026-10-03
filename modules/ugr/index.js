@@ -19,3 +19,4 @@ export { ugrActionImportPoints } from './import/action';
 export { ugrFindDuplicates } from './import/duplicates';
 export { ugrImportChangesetTags, ugrPendingImport, ugrSetPendingImport } from './import/record';
 export { ugrImportDialog } from './import/dialog';
+export { ugrToolImport } from './import/tool';

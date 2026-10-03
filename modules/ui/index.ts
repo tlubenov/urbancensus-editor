@@ -50,6 +50,8 @@ export { uiSuccess } from './success';
 export { uiTagReference } from './tag_reference';
 export { uiToggle } from './toggle';
 export { uiTooltip } from './tooltip';
+// ugr: exposed so the import button's spec can render the top toolbar
+export { uiTopToolbar } from './top_toolbar';
 export { uiVersion } from './version';
 export { uiViewOnOSM } from './view_on_osm';
 export { uiZoom } from './zoom';

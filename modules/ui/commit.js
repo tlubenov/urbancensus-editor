@@ -17,6 +17,8 @@ import { utilDetect } from '../util/detect';
 import { getIncompatibleSources } from '../validations/incompatible_source';
 // ugr: deleting a locked feature can't be saved
 import { ugrLockedDeletions } from '../ugr/validations/locked_modified';
+// ugr: an import's changeset says what was imported, from which file, by whom and when
+import { ugrImportChangesetTags } from '../ugr/import/record';
 
 
 var readOnlyTags = [
@@ -125,6 +127,9 @@ export function uiCommit(context) {
 
             tags.source = context.cleanTagValue(sources.filter(Boolean).join(';'));
         }
+
+        // ugr: an import's changeset says what was imported, from which file, by whom and when
+        Object.assign(tags, ugrImportChangesetTags(context.graph()));
 
         context.changeset = new osmChangeset({ tags: tags });
     }

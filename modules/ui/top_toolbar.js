@@ -4,6 +4,8 @@ import {
 
 import { debounce } from 'es-toolkit';
 import { uiToolDrawModes, uiToolNotes, uiToolSave, uiToolSidebarToggle, uiToolUndoRedo } from './tools';
+// ugr: point import beside the draw modes
+import { ugrToolImport } from '../ugr/import/tool';
 
 
 export function uiTopToolbar(context) {
@@ -13,6 +15,9 @@ export function uiTopToolbar(context) {
         notes = uiToolNotes(context),
         undoRedo = uiToolUndoRedo(context),
         save = uiToolSave(context);
+
+    // ugr: point import beside the draw modes
+    var ugrImport = ugrToolImport(context);
 
     function notesEnabled() {
         var noteLayer = context.layers().layer('notes');
@@ -43,6 +48,8 @@ export function uiTopToolbar(context) {
                 modes
             ];
 
+            // ugr: point import beside the draw modes
+            tools.push(ugrImport);
             tools.push('spacer');
 
             if (notesEnabled()) {
