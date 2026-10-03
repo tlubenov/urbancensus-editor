@@ -12,3 +12,4 @@ export { ugrDisabledValidations, ugrIsOwnRule, ugrRuleKeysFor, ugrValidationDisa
 export { ugrUnknownValue } from './validations/rules';
 export { ugrLockedDeletions } from './validations/locked_modified';
 export { ugrKeptServices, ugrPruneServices } from './removals';
+export { UGR_BGS2005, ugrGuessCrs, ugrInBulgaria, ugrNormalizeCrs, ugrToWgs84 } from './import/crs';
