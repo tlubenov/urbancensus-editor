@@ -3,7 +3,7 @@ import { osmNode } from '../../osm';
 import { uiModal } from '../../ui/modal';
 import { ugrRules } from '../rules/store';
 import { ugrActionImportPoints } from './action';
-import { ugrCheckImport, ugrGuessImportCrs, ugrImportCounts } from './check';
+import { UGR_IMPORT_MAX_BYTES, ugrCheckImport, ugrGuessImportCrs, ugrImportCounts } from './check';
 import { ugrFindDuplicates } from './duplicates';
 import { ugrSetPendingImport } from './record';
 
@@ -14,7 +14,10 @@ function formatCounts(counts, labels) {
 }
 
 function problemText(problem) {
-    const message = t('ugr.import.problem.' + problem.code, Object.assign({ column: problem.column }, problem.params));
+    const params = Object.assign({ column: problem.column }, problem.params);
+    // A number param is shown with a thousands separator: a line number must not be.
+    if (typeof params.line === 'number') params.line = String(params.line);
+    const message = t('ugr.import.problem.' + problem.code, params);
     if (problem.line === null) return message;
     return problem.column ?
         t('ugr.import.at_line_column', { line: String(problem.line), column: problem.column, message }) :
@@ -24,7 +27,7 @@ function problemText(problem) {
 // Upload form, problem report and preview. Adding the points is one history action; nothing is uploaded.
 export function ugrImportDialog(context, { displayName = null } = {}) {
     const modal = uiModal(context.container());
-    modal.select('.modal').classed('ugr-import', true);
+    modal.select('.modal').classed('ugr-import-dialog', true);
     const content = modal.select('.content');
 
     content.append('div')
@@ -89,14 +92,18 @@ export function ugrImportDialog(context, { displayName = null } = {}) {
     let _skip = true;
 
     function readFile(file) {
+        // Too large is reported from the size alone, without reading the file.
+        if (file.size > UGR_IMPORT_MAX_BYTES) return loadFile(file.name, file.size, '');
         const reader = new FileReader();
         reader.onload = () => loadFile(file.name, file.size, String(reader.result));
+        reader.onerror = () => loadFile(file.name, file.size, null);
         reader.readAsText(file, 'utf-8');
     }
 
+    // `text` is null when the file couldn't be read.
     function loadFile(name, size, text) {
         _file = { name, size, text };
-        const guess = ugrGuessImportCrs(text);
+        const guess = text === null ? null : ugrGuessImportCrs(text);
         if (guess) crsSelect.property('value', guess);
         recheck();
     }

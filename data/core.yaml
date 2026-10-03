@@ -2411,6 +2411,7 @@ en:
         no_header: "The first row must be a header: id, x, y"
         missing_column: "Column {column} is missing"
         too_large: The file is larger than 5 MB
+        unreadable: "The file couldn't be read"
         too_many: "The file has {count} points; at most {max} fit in one changeset – split the file"
         required: is empty
         duplicate_id: "repeats the id on line {line}"
@@ -2423,3 +2424,4 @@ en:
         outside_bulgaria: is outside Bulgaria
         maybe_swapped: "is outside Bulgaria – x and y may be swapped"
         outside_boundary: is outside the municipality boundary
+        blocked_by_rules: "{type} points need attributes a file can't supply, so they couldn't be saved"

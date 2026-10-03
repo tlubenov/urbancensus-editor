@@ -23,6 +23,10 @@ describe('iD.ugrImportDialog', function () {
         iD.ugrSetPendingImport(null);
     });
 
+    afterEach(function () {
+        vi.restoreAllMocks();
+    });
+
     function created() {
         return context.history().difference().created().filter(function (e) { return e.type === 'node'; });
     }
@@ -103,5 +107,45 @@ describe('iD.ugrImportDialog', function () {
         Object.defineProperty(input, 'value', { get: function () { return 'a.csv'; }, set: function (v) { assigned.push(v); } });
         input.dispatchEvent(new Event('change'));
         expect(assigned).toEqual(['']);
+    });
+
+    function pick(file) {
+        var input = container.select('.ugr-import-file').node();
+        Object.defineProperty(input, 'files', { value: [file] });
+        input.dispatchEvent(new Event('change'));
+    }
+
+    function problems() {
+        return container.selectAll('.ugr-import-problems li').nodes().map(function (n) { return n.textContent; });
+    }
+
+    it('refuses a file over 5 MB without reading it', function () {
+        var read = vi.spyOn(FileReader.prototype, 'readAsText');
+        iD.ugrImportDialog(context, {});
+        pick({ name: 'big.csv', size: iD.UGR_IMPORT_MAX_BYTES + 1 });
+        expect(read).not.toHaveBeenCalled();
+        expect(problems()).toEqual(['The file is larger than 5 MB']);
+    });
+
+    it('reports a file it can\'t read', function () {
+        vi.spyOn(FileReader.prototype, 'readAsText').mockImplementation(function () { this.onerror(); });
+        iD.ugrImportDialog(context, {});
+        pick(new File(['id,x,y\n'], 'a.csv'));
+        expect(problems()).toEqual(['The file couldn\'t be read']);
+    });
+
+    it('names a line past 999 without a thousands separator', function () {
+        var rows = ['id,x,y,crs,accuracy'];
+        for (var i = 0; i < 1000; i++) rows.push('T' + i + ',23.33,42.70,wgs84,1');
+        rows.push('T999,23.33,42.70,wgs84,1');
+        var text = rows.join('\n');
+        iD.ugrImportDialog(context, {}).loadFile('trees.csv', text.length, text);
+        expect(problems()).toEqual(['Line 1002, id: repeats the id on line 1001']);
+    });
+
+    it('marks its modal with a class of its own, not the toolbar item\'s', function () {
+        iD.ugrImportDialog(context, {});
+        expect(container.selectAll('.modal.ugr-import-dialog').size()).toBe(1);
+        expect(container.selectAll('.ugr-import').size()).toBe(0);
     });
 });

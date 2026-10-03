@@ -1,4 +1,4 @@
-import { ugrPointInBoundary } from '../rules/evaluate';
+import { ugrEvaluate, ugrPointInBoundary } from '../rules/evaluate';
 import { ugrGuessCrs, ugrInBulgaria, ugrNormalizeCrs, ugrToWgs84 } from './crs';
 import { UGR_REQUIRED_COLUMNS, ugrParsePoints } from './parse';
 
@@ -24,9 +24,11 @@ function result(problems, ignored = [], points = []) {
     return { problems, points: problems.length ? [] : points, ignored };
 }
 
-// `crs` and `accuracy` are the form's defaults for rows without their own (null and '' when unset).
+// `crs` and `accuracy` are the form's defaults for rows without their own (null and '' when unset); `text` is null
+// for a file that couldn't be read.
 export function ugrCheckImport({ fileName, size, text, rules, crs, accuracy, maxPoints }) {
     if (size > UGR_IMPORT_MAX_BYTES) return result([{ line: null, column: null, code: 'too_large' }]);
+    if (text === null) return result([{ line: null, column: null, code: 'unreadable' }]);
 
     const parsed = ugrParsePoints(text);
     if (parsed.problems.length) return result(parsed.problems, parsed.ignored);
@@ -85,18 +87,25 @@ export function ugrCheckImport({ fileName, size, text, rules, crs, accuracy, max
             continue;
         }
 
+        const tags = Object.assign({}, preset.tags, {
+            'ugr:source_id': cells.id,
+            'ugr:source_file': fileName,
+            'ugr:source_crs': rowCrs,
+            'ugr:precision_m': String(precision)
+        });
+        // A point the rules block (e.g. a type that requires a species) could never be saved.
+        if (ugrEvaluate(rules, { geometry: 'point', tags, coordinates: [loc] }).some(code => code !== 'ugr_outside_boundary')) {
+            problem('type', 'blocked_by_rules', { type });
+            continue;
+        }
+
         points.push({
             line,
             id: cells.id,
             crs: rowCrs,
             type,
             loc: [round7(loc[0]), round7(loc[1])],
-            tags: Object.assign({}, preset.tags, {
-                'ugr:source_id': cells.id,
-                'ugr:source_file': fileName,
-                'ugr:source_crs': rowCrs,
-                'ugr:precision_m': String(precision)
-            })
+            tags
         });
     }
 

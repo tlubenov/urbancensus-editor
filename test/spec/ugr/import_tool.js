@@ -53,14 +53,44 @@ describe('iD.ugrToolImport', function () {
     it('opens the import dialog when clicked', function () {
         iD.ugrToolImport(context).render(div);
         button().node().click();
-        expect(container.selectAll('.ugr-import').size()).toBe(1);
+        expect(container.selectAll('.ugr-import-dialog').size()).toBe(1);
     });
 
     it('does nothing when clicked while disabled', function () {
         iD.ugrToolImport(context).render(div);
         addNode();
         button().node().click();
-        expect(container.selectAll('.ugr-import').size()).toBe(0);
+        expect(container.selectAll('.ugr-import-dialog').size()).toBe(0);
+    });
+
+    it('opens one dialog however often it is clicked while signing in', function () {
+        var pending = [];
+        var osm = {
+            authenticated: function () { return true; },
+            userDetails: function (callback) { pending.push(callback); },
+            maxChangesetElements: function () { return 10000; }
+        };
+        context.connection = function () { return osm; };
+        iD.ugrToolImport(context).render(div);
+        button().node().click();
+        button().node().click();
+        pending.forEach(function (callback) { callback(null, { display_name: 'Tester' }); });
+        expect(container.selectAll('.ugr-import-dialog').size()).toBe(1);
+        expect(container.selectAll('.shaded').size()).toBe(1);
+    });
+
+    it('can be clicked again after signing in fails', function () {
+        var attempts = 0;
+        var osm = {
+            authenticated: function () { return false; },
+            authenticate: function (callback) { attempts++; callback(new Error('cancelled')); }
+        };
+        context.connection = function () { return osm; };
+        iD.ugrToolImport(context).render(div);
+        button().node().click();
+        button().node().click();
+        expect(attempts).toBe(2);
+        expect(container.selectAll('.ugr-import-dialog').size()).toBe(0);
     });
 
     it('sits in the top toolbar', function () {

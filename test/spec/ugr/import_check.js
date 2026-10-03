@@ -110,6 +110,10 @@ describe('iD.ugrCheckImport', function () {
         expect(codes(check('id,x,y\nA,23.33,42.70', { size: iD.UGR_IMPORT_MAX_BYTES + 1 }))).toEqual([[null, null, 'too_large']]);
     });
 
+    it('reports a file that couldn\'t be read', function () {
+        expect(codes(check('', { text: null }))).toEqual([[null, null, 'unreadable']]);
+    });
+
     it('refuses more points than one changeset holds', function () {
         var result = check('id,x,y\nA,23.33,42.70\nB,23.34,42.71', { maxPoints: 1 });
         expect(codes(result)).toEqual([[null, null, 'too_many']]);
@@ -118,6 +122,18 @@ describe('iD.ugrCheckImport', function () {
 
     it('passes on the parser\'s file problems', function () {
         expect(codes(check('id,lon\nA,1'))).toEqual([[null, 'y', 'missing_column']]);
+    });
+
+    it('reports a type whose points the rules would block, and still passes trees', function () {
+        var strict = Object.assign({}, rules, {
+            presets: Object.assign({}, rules.presets, {
+                'ugr/shrub': { geometry: ['point'], tags: { natural: 'shrub' }, required_any: [['species', 'genus']] }
+            })
+        });
+        var result = check('id,x,y,type\nA,23.33,42.70,shrub', { rules: strict });
+        expect(codes(result)).toEqual([[2, 'type', 'blocked_by_rules']]);
+        expect(result.problems[0].params).toEqual({ type: 'shrub' });
+        expect(check('id,x,y,type\nA,23.33,42.70,tree', { rules: strict }).points).toHaveLength(1);
     });
 
     it('names the columns it ignores', function () {

@@ -12,6 +12,7 @@ export function ugrToolImport(context) {
         label: t.append('ugr.import.button')
     };
     let button = null;
+    let _opening = false;   // signing in or fetching the user: further clicks would open a second dialog
 
     function disabledReason() {
         if (!ugrRulesReady()) return 'ugr.import.disabled_rules';
@@ -25,12 +26,23 @@ export function ugrToolImport(context) {
 
     // The changeset comment names the user, so sign in first when there is a connection.
     function open() {
+        if (_opening) return;
         const osm = context.connection();
-        const show = user => ugrImportDialog(context, { displayName: user ? user.display_name : null });
+        const show = user => {
+            _opening = false;
+            ugrImportDialog(context, { displayName: user ? user.display_name : null });
+        };
         if (!osm) return show(null);
+        _opening = true;
         const withDetails = () => osm.userDetails((err, user) => show(err ? null : user));
-        if (osm.authenticated()) withDetails();
-        else osm.authenticate(err => { if (!err) withDetails(); });
+        if (osm.authenticated()) {
+            withDetails();
+        } else {
+            osm.authenticate(err => {
+                if (err) _opening = false;
+                else withDetails();
+            });
+        }
     }
 
     tool.render = function (selection) {
