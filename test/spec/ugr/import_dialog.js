@@ -94,4 +94,14 @@ describe('iD.ugrImportDialog', function () {
         skip.dispatch('change');
         expect(container.select('.ugr-import-add').text()).toBe('Add 2 points to the map');
     });
+
+    it('clears the file input after a pick so the same file can be chosen again', function () {
+        iD.ugrImportDialog(context, {});
+        var input = container.select('.ugr-import-file').node();
+        var assigned = [];
+        Object.defineProperty(input, 'files', { value: [new File(['id,x,y\n'], 'a.csv')] });
+        Object.defineProperty(input, 'value', { get: function () { return 'a.csv'; }, set: function (v) { assigned.push(v); } });
+        input.dispatchEvent(new Event('change'));
+        expect(assigned).toEqual(['']);
+    });
 });

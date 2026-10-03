@@ -41,6 +41,8 @@ export function ugrImportDialog(context, { displayName = null } = {}) {
         .on('change', function () {
             const file = this.files && this.files[0];
             if (file) readFile(file);
+            // Browsers fire `change` only when the selection differs: clear it so picking the same (fixed) file again works.
+            this.value = '';
         });
     form.append('p').text(t('ugr.import.axes'));
 
