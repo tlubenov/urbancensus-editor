@@ -14,3 +14,4 @@ export { ugrLockedDeletions } from './validations/locked_modified';
 export { ugrKeptServices, ugrPruneServices } from './removals';
 export { UGR_BGS2005, ugrGuessCrs, ugrInBulgaria, ugrNormalizeCrs, ugrToWgs84 } from './import/crs';
 export { UGR_REQUIRED_COLUMNS, ugrParsePoints } from './import/parse';
+export { UGR_IMPORT_MAX_BYTES, ugrCheckImport, ugrGuessImportCrs, ugrImportCounts } from './import/check';
