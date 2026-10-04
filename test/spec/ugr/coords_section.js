@@ -183,3 +183,19 @@ describe('iD.ugrSectionCoordinates', function () {
         expect(iD.modeSelect(context, ['n-tree']).selectedIDs()).toEqual(['n-tree']);
     });
 });
+
+describe('iD.ugr coordinates in the entity editor', function () {
+    function sectionIds() {
+        var context = iD.coreContext().assetPath('../dist/').init();
+        return iD.uiEntityEditor(context).ugrSectionIdsForTest();
+    }
+
+    it('is one of the entity editor sections', function () {
+        expect(sectionIds()).toContain('ugr-coordinates');
+    });
+
+    it('sits after the preset fields, so it reads as one more group of fields', function () {
+        var ids = sectionIds();
+        expect(ids.indexOf('ugr-coordinates')).toBeGreaterThan(ids.indexOf('preset-fields'));
+    });
+});

@@ -93,7 +93,8 @@ export function ugrSectionCoordinates(context) {
     function onSubmit(which, input) {
         const node = selectedNode();
         const unchanged = !!node && input.value === ugrCoordsFor(node.loc)[which];
-        if (section.ugrSubmit(which, input.value)) {
+        const submitted = section.ugrSubmit(which, input.value);
+        if (submitted) {
             input.removeAttribute('title');
             input.removeAttribute('aria-invalid');
         } else if (node) {
@@ -106,8 +107,12 @@ export function ugrSectionCoordinates(context) {
                 input.setAttribute('aria-invalid', 'true');
             }
         }
-        // No sidebar redraw here: perform fires a history change, and the entity editor re-renders
-        // from that, which re-runs renderContent and reformats the field.
+        // A successful move must redraw this section itself. A coordinate move sets only
+        // didChange.geometry (modules/core/difference.ts), and the entity editor's historyChanged
+        // (modules/ui/entity_editor.js) ignores a change without properties, addition or deletion,
+        // so it never re-renders for us. Without this the field keeps the typed text and the blur
+        // that follows re-submits it as a second undo entry.
+        if (submitted) section.reRender();
     }
 
     return section;

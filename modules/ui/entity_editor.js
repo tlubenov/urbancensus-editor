@@ -12,6 +12,7 @@ import { svgIcon } from '../svg/icon';
 import { utilArrayIdentical } from '../util/array';
 import { utilCleanTags, utilCombinedTags, utilRebind } from '../util';
 
+import { ugrSectionCoordinates } from '../ugr/coords/section';
 import { uiSectionEntityIssues } from './sections/entity_issues';
 import { uiSectionFeatureType } from './sections/feature_type';
 import { uiSectionPresetFields } from './sections/preset_fields';
@@ -31,6 +32,24 @@ export function uiEntityEditor(context) {
     var _newFeature;
 
     var _sections;
+
+    function sections() {
+        if (!_sections) {
+            _sections = [
+                uiSectionSelectionList(context),
+                uiSectionFeatureType(context).on('choose', function(presets) {
+                    dispatch.call('choose', this, presets);
+                }),
+                uiSectionEntityIssues(context),
+                uiSectionPresetFields(context).on('change', changeTags).on('revert', revertTags),
+                ugrSectionCoordinates(context),
+                uiSectionRawTagEditor('raw-tag-editor', context).on('change', changeTags),
+                uiSectionRawMemberEditor(context),
+                uiSectionRawMembershipEditor(context)
+            ];
+        }
+        return _sections;
+    }
 
     function entityEditor(selection) {
 
@@ -91,21 +110,7 @@ export function uiEntityEditor(context) {
         body = body
             .merge(bodyEnter);
 
-        if (!_sections) {
-            _sections = [
-                uiSectionSelectionList(context),
-                uiSectionFeatureType(context).on('choose', function(presets) {
-                    dispatch.call('choose', this, presets);
-                }),
-                uiSectionEntityIssues(context),
-                uiSectionPresetFields(context).on('change', changeTags).on('revert', revertTags),
-                uiSectionRawTagEditor('raw-tag-editor', context).on('change', changeTags),
-                uiSectionRawMemberEditor(context),
-                uiSectionRawMembershipEditor(context)
-            ];
-        }
-
-        _sections.forEach(function(section) {
+        sections().forEach(function(section) {
             if (section.entityIDs) {
                 section.entityIDs(_entityIDs);
             }
@@ -285,6 +290,13 @@ export function uiEntityEditor(context) {
         if (!arguments.length) return _modified;
         _modified = val;
         return entityEditor;
+    };
+
+
+    // The ids of the sections this editor builds, in order. Exists so a test can assert where the
+    // coordinate section sits without rendering a sidebar.
+    entityEditor.ugrSectionIdsForTest = function() {
+        return sections().map(function(s) { return s.id; });
     };
 
 
