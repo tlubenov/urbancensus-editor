@@ -165,7 +165,11 @@ describe('iD.ugrSectionCoordinates', function () {
         expect(context.entity('n-a').loc).toEqual(before);
     });
 
-    it('refuses to move a vertex of a locked way', function () {
+    // While vertices are excluded, ugrIsLocked's parent-way branch is unreachable from this section:
+    // a standalone point has no parent ways, so the only lock that can fire here is the node's own
+    // ugr:locked tag (see the locked-feature test above). This test passes on the vertex exclusion
+    // alone; it stays to catch someone re-allowing vertices without reconsidering locking.
+    it('refuses a vertex whether or not its parent way is locked', function () {
         selecting(['n-c']);
         var section = iD.ugrSectionCoordinates(context);
         var before = context.entity('n-c').loc;
