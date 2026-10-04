@@ -14,7 +14,10 @@ export function ugrSectionCoordinates(context) {
         const ids = context.selectedIDs();
         if (ids.length !== 1) return null;
         const entity = context.hasEntity(ids[0]);
-        return entity && entity.type === 'node' ? entity : null;
+        if (!entity || entity.type !== 'node') return null;
+        // A vertex belongs to a way, and typing one corner of a polygon is how a shape ends up
+        // self-intersecting (C-D1: standalone points only).
+        return context.graph().parentWays(entity).length ? null : entity;
     }
 
     function locked() {
@@ -44,7 +47,11 @@ export function ugrSectionCoordinates(context) {
     section.ugrSubmit = function(which, text) {
         const node = selectedNode();
         if (!node || locked()) return false;
-        const loc = locFor(which, text, ugrCoordsFor(node.loc));
+        const shown = ugrCoordsFor(node.loc);
+        // Tabbing through a field re-submits the rounded display value, which would nudge the
+        // point by a few centimetres and add an undo entry for nothing.
+        if (text === shown[which]) return false;
+        const loc = locFor(which, text, shown);
         if (!loc) return false;
         // actionMoveNode is transitionable, and history.perform animates a transitionable action
         // asynchronously from t=0. A typed value should land at once -- and the field is re-read from
@@ -83,11 +90,20 @@ export function ugrSectionCoordinates(context) {
     // A refusal puts the field back to the point's real value, so the box never shows a position the
     // map does not agree with.
     function onSubmit(which, input) {
-        if (!section.ugrSubmit(which, input.value)) {
-            const node = selectedNode();
-            if (node) input.value = ugrCoordsFor(node.loc)[which];
+        const node = selectedNode();
+        const unchanged = !!node && input.value === ugrCoordsFor(node.loc)[which];
+        if (section.ugrSubmit(which, input.value)) {
+            input.removeAttribute('title');
+            input.removeAttribute('aria-invalid');
+        } else if (node) {
+            input.value = ugrCoordsFor(node.loc)[which];
+            if (!unchanged) {
+                input.title = t('ugr.coords.invalid');
+                input.setAttribute('aria-invalid', 'true');
+            }
         }
-        context.ui().sidebar.show();
+        // No sidebar redraw here: perform fires a history change, and the entity editor re-renders
+        // from that, which re-runs renderContent and reformats the field.
     }
 
     return section;

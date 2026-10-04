@@ -7,7 +7,10 @@ describe('iD.ugrSectionCoordinates', function () {
             new iD.osmNode({ id: 'n-lockedpt', loc: [23.3, 42.6], tags: { 'ugr:locked': 'yes' } }),
             new iD.osmNode({ id: 'n-a', loc: [23.30, 42.60] }),
             new iD.osmNode({ id: 'n-b', loc: [23.31, 42.61] }),
-            new iD.osmWay({ id: 'w1', nodes: ['n-a', 'n-b'] })
+            new iD.osmWay({ id: 'w1', nodes: ['n-a', 'n-b'] }),
+            new iD.osmWay({ id: 'w-locked', nodes: ['n-c', 'n-d'], tags: { 'ugr:locked': 'yes' } }),
+            new iD.osmNode({ id: 'n-c', loc: [23.40, 42.60] }),
+            new iD.osmNode({ id: 'n-d', loc: [23.41, 42.61] })
         ];
         context = iD.coreContext().assetPath('../dist/').init();
         context.history().merge(entities);
@@ -59,13 +62,16 @@ describe('iD.ugrSectionCoordinates', function () {
         var before = context.entity('n-tree').loc;
         section.ugrSubmit('x', '321659.18');   // 100 m east
         expect(context.entity('n-tree').loc[0]).toBeGreaterThan(before[0]);
+        // The grid is not aligned with the meridians, so a pure easting move shifts the latitude by a
+        // few metres. What must hold is that the northing is the one it had.
+        expect(iD.ugrCoordsFor(context.entity('n-tree').loc).y).toBe(iD.ugrCoordsFor(before).y);
     });
 
     it('leaves the point where it was when the value is not a number', function () {
         selecting(['n-tree']);
         var section = iD.ugrSectionCoordinates(context);
         var before = context.entity('n-tree').loc;
-        section.ugrSubmit('lat', 'abc');
+        expect(section.ugrSubmit('lat', 'abc')).toBe(false);
         expect(context.entity('n-tree').loc).toEqual(before);
     });
 
@@ -73,7 +79,7 @@ describe('iD.ugrSectionCoordinates', function () {
         selecting(['n-tree']);
         var section = iD.ugrSectionCoordinates(context);
         var before = context.entity('n-tree').loc;
-        section.ugrSubmit('lat', '91');
+        expect(section.ugrSubmit('lat', '91')).toBe(false);
         expect(context.entity('n-tree').loc).toEqual(before);
     });
 
@@ -101,6 +107,70 @@ describe('iD.ugrSectionCoordinates', function () {
         section.ugrSubmit('lat', '42.700000');
         context.history().undo();
         expect(context.entity('n-tree').loc).toEqual(before);
+    });
+
+    it('moves the point when a valid longitude is submitted', function () {
+        selecting(['n-tree']);
+        var section = iD.ugrSectionCoordinates(context);
+        expect(section.ugrSubmit('lon', '23.330000')).toBe(true);
+        expect(context.entity('n-tree').loc[0]).toBeCloseTo(23.33, 6);
+        expect(context.entity('n-tree').loc[1]).toBeCloseTo(42.6977, 6);
+    });
+
+    it('moves the point when a valid BGS2005 northing is submitted', function () {
+        selecting(['n-tree']);
+        var section = iD.ugrSectionCoordinates(context);
+        var before = context.entity('n-tree').loc;
+        expect(section.ugrSubmit('y', '4731536.07')).toBe(true);   // 100 m north
+        expect(context.entity('n-tree').loc[1]).toBeGreaterThan(before[1]);
+        expect(iD.ugrCoordsFor(context.entity('n-tree').loc).x).toBe(iD.ugrCoordsFor(before).x);
+    });
+
+    it('refuses a longitude beyond the antimeridian', function () {
+        selecting(['n-tree']);
+        var section = iD.ugrSectionCoordinates(context);
+        var before = context.entity('n-tree').loc;
+        expect(section.ugrSubmit('lon', '181')).toBe(false);
+        expect(context.entity('n-tree').loc).toEqual(before);
+    });
+
+    it('refuses an empty field', function () {
+        selecting(['n-tree']);
+        var section = iD.ugrSectionCoordinates(context);
+        var before = context.entity('n-tree').loc;
+        expect(section.ugrSubmit('lat', '')).toBe(false);
+        expect(context.entity('n-tree').loc).toEqual(before);
+    });
+
+    it('does not move the point or add an undo entry when the displayed value is submitted back', function () {
+        selecting(['n-tree']);
+        var section = iD.ugrSectionCoordinates(context);
+        var before = context.entity('n-tree').loc;
+        var shown = iD.ugrCoordsFor(before).lat;
+        expect(section.ugrSubmit('lat', shown)).toBe(false);
+        expect(context.entity('n-tree').loc).toEqual(before);
+        expect(context.history().undoAnnotation()).toBeFalsy();
+    });
+
+    it('does not show for a vertex of an unlocked way', function () {
+        selecting(['n-a']);
+        expect(iD.ugrSectionCoordinates(context).shouldDisplay()()).toBe(false);
+    });
+
+    it('refuses to move a vertex of an unlocked way', function () {
+        selecting(['n-a']);
+        var section = iD.ugrSectionCoordinates(context);
+        var before = context.entity('n-a').loc;
+        expect(section.ugrSubmit('lat', '42.650000')).toBe(false);
+        expect(context.entity('n-a').loc).toEqual(before);
+    });
+
+    it('refuses to move a vertex of a locked way', function () {
+        selecting(['n-c']);
+        var section = iD.ugrSectionCoordinates(context);
+        var before = context.entity('n-c').loc;
+        expect(section.ugrSubmit('lat', '42.650000')).toBe(false);
+        expect(context.entity('n-c').loc).toEqual(before);
     });
 
     it('the stub mode reports ids the way the real select mode does', function () {
