@@ -18,7 +18,8 @@ export function ugrFormatMetres(value) {
 // before: an f-string writes dots while a template float takes the locale's comma, and iD then fails
 // to parse the hash. Accept both, emit dots.
 export function ugrParseNumber(text) {
-    const cleaned = String(text == null ? '' : text).trim().replace(',', '.');
+    const cleaned = String(text ?? '').trim().replace(',', '.');
+    // Regex rejects leading and trailing dots (e.g., '.5', '42.') which would be ambiguous in a coordinate field.
     if (!/^[+-]?\d+(\.\d+)?$/.test(cleaned)) return null;
     const value = Number(cleaned);
     return Number.isFinite(value) ? value : null;
@@ -38,13 +39,13 @@ export function ugrCoordsFor(loc) {
 }
 
 export function ugrLocFromDegrees(lon, lat) {
-    if (lon === null || lat === null) return null;
+    if (!Number.isFinite(lon) || !Number.isFinite(lat)) return null;
     if (lat < -90 || lat > 90 || lon < -180 || lon > 180) return null;
     return [lon, lat];
 }
 
 export function ugrLocFromBgs2005(x, y) {
-    if (x === null || y === null) return null;
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
     const { x: [xmin, xmax], y: [ymin, ymax] } = UGR_BGS2005_RANGE;
     if (x < xmin || x > xmax || y < ymin || y > ymax) return null;
     return ugrToWgs84('bgs2005', x, y);
