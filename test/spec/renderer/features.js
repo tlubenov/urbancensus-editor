@@ -15,41 +15,38 @@ describe('iD.rendererFeatures', function() {
 
     describe('#keys', function() {
         it('returns feature keys', function() {
-            var keys = features.keys();
-            expect(keys).toContain(
-                'points', 'traffic_roads', 'service_roads', 'paths',
-                'buildings', 'landuse', 'boundaries', 'water', 'rail',
-                'power', 'past_future', 'others'
-            );
+            // toContain checks only its first argument, so the previous form of this assertion
+            // listed twelve keys and verified one. The list is short enough to compare whole.
+            expect(features.keys()).toEqual(['ugr_locked', 'points', 'landuse', 'others']);
         });
     });
 
     describe('#disable', function() {
         it('disables features', function() {
-            features.disable('water');
-            expect(features.disabled()).toContain('water');
-            expect(features.enabled()).not.toContain('water');
+            features.disable('landuse');
+            expect(features.disabled()).toContain('landuse');
+            expect(features.enabled()).not.toContain('landuse');
         });
     });
 
     describe('#enable', function() {
         it('enables features', function() {
-            features.disable('water');
-            features.enable('water');
-            expect(features.disabled()).not.toContain('water');
-            expect(features.enabled()).toContain('water');
+            features.disable('landuse');
+            features.enable('landuse');
+            expect(features.disabled()).not.toContain('landuse');
+            expect(features.enabled()).toContain('landuse');
         });
     });
 
     describe('#toggle', function() {
         it('toggles features', function() {
-            features.toggle('water');
-            expect(features.disabled()).toContain('water');
-            expect(features.enabled()).not.toContain('water');
+            features.toggle('landuse');
+            expect(features.disabled()).toContain('landuse');
+            expect(features.enabled()).not.toContain('landuse');
 
-            features.toggle('water');
-            expect(features.disabled()).not.toContain('water');
-            expect(features.enabled()).toContain('water');
+            features.toggle('landuse');
+            expect(features.disabled()).not.toContain('landuse');
+            expect(features.enabled()).toContain('landuse');
         });
     });
 
@@ -72,18 +69,14 @@ describe('iD.rendererFeatures', function() {
             features.gatherStats(all, graph, dimensions);
             stats = features.stats();
 
-            expect(stats.boundaries).toEqual(1);
-            expect(stats.buildings).toEqual(1);
-            expect(stats.landuse).toEqual(0);
-            expect(stats.traffic_roads).toEqual(1);
-            expect(stats.service_roads).toEqual(0);
-            expect(stats.others).toEqual(1);
-            expect(stats.past_future).toEqual(1);
-            expect(stats.paths).toEqual(0);
+            // Four buckets remain. The five nodes are points; the four ways -- a motorway, a
+            // building, a boundary and a fence -- are no longer sorted into roads, buildings and
+            // boundaries, so they all land in `others`, which is why that catch-all is kept.
+            expect(features.keys()).toEqual(['ugr_locked', 'points', 'landuse', 'others']);
             expect(stats.points).toEqual(5);
-            expect(stats.power).toEqual(1);
-            expect(stats.rail).toEqual(1);
-            expect(stats.water).toEqual(1);
+            expect(stats.others).toEqual(4);
+            expect(stats.landuse).toEqual(0);
+            expect(stats.ugr_locked).toEqual(0);
         });
     });
 
@@ -275,149 +268,20 @@ describe('iD.rendererFeatures', function() {
         });
 
 
-        it('matches traffic roads', function () {
-            features.gatherStats(all, graph, dimensions);
-
-            doMatch('traffic_roads', [
-                'motorway', 'motorway_link', 'trunk', 'trunk_link',
-                'primary', 'primary_link', 'secondary', 'secondary_link',
-                'tertiary', 'tertiary_link', 'residential', 'living_street',
-                'unclassified', 'boundary_road', 'inner3'
-            ]);
-
-            dontMatch('traffic_roads', [
-                'point_bar', 'service', 'road', 'track', 'path', 'building_yes',
-                'forest', 'boundary', 'boundary_member', 'water', 'railway', 'power_line',
-                'motorway_construction', 'fence'
-            ]);
-        });
 
 
-        it('matches service roads', function () {
-            features.gatherStats(all, graph, dimensions);
-
-            doMatch('service_roads', [
-                'service', 'road', 'track', 'piste_track_combo'
-            ]);
-
-            dontMatch('service_roads', [
-                'point_bar', 'motorway', 'unclassified', 'living_street',
-                'path', 'building_yes', 'forest', 'boundary', 'boundary_member', 'water',
-                'railway', 'power_line', 'motorway_construction', 'fence'
-            ]);
-        });
 
 
-        it('matches paths', function () {
-            features.gatherStats(all, graph, dimensions);
-
-            doMatch('paths', [
-                'path', 'footway', 'cycleway', 'bridleway',
-                'steps', 'pedestrian'
-            ]);
-
-            dontMatch('paths', [
-                'point_bar', 'motorway', 'service', 'building_yes',
-                'forest', 'boundary', 'boundary_member', 'water', 'railway', 'power_line',
-                'motorway_construction', 'fence', 'corridor'
-            ]);
-        });
 
 
-        it('matches buildings', function () {
-            features.gatherStats(all, graph, dimensions);
-
-            doMatch('buildings', [
-                'building_yes',
-                'garage1', 'garage2', 'garage3', 'garage4'
-            ]);
-
-            dontMatch('buildings', [
-                'building_no', 'building_construction', 'point_bar', 'motorway', 'service', 'path',
-                'forest', 'boundary', 'boundary_member', 'water', 'railway', 'power_line',
-                'motorway_construction', 'fence'
-            ]);
-        });
 
 
-        it('matches building_parts', function () {
-            features.gatherStats(all, graph, dimensions);
-
-            doMatch('building_parts', [
-                'building_part'
-            ]);
-
-            dontMatch('building_parts', [
-                'building_yes',
-                'garage1', 'garage2', 'garage3', 'garage4',
-                'building_no', 'point_bar', 'motorway', 'service', 'path',
-                'forest', 'boundary', 'boundary_member', 'water', 'railway', 'power_line',
-                'motorway_construction', 'fence'
-            ]);
-        });
 
 
-        it('matches indoor', function () {
-            features.gatherStats(all, graph, dimensions);
-
-            doMatch('indoor', [
-                'room', 'indoor_area', 'indoor_bar', 'corridor'
-            ]);
-
-            dontMatch('indoor', [
-                'downhill_piste', 'piste_track_combo',
-                'building_part', 'garage1', 'garage2', 'garage3', 'garage4',
-                'building_no', 'point_bar', 'motorway', 'service', 'path', 'building_yes',
-                'boundary', 'boundary_member', 'water', 'railway', 'power_line',
-                'motorway_construction', 'fence',
-                'inner3', 'forest', 'scrub', 'industrial', 'parkinglot', 'building_no',
-                'rail_landuse', 'landuse_construction', 'retail',
-                'outer', 'inner1', 'inner2'
-            ]);
-        });
 
 
-        it('matches pistes', function () {
-            features.gatherStats(all, graph, dimensions);
-
-            doMatch('pistes', [
-                'downhill_piste', 'piste_track_combo'
-            ]);
-
-            dontMatch('pistes', [
-                'room', 'indoor_area', 'indoor_bar', 'corridor',
-                'building_part', 'garage1', 'garage2', 'garage3', 'garage4',
-                'building_no', 'point_bar', 'motorway', 'service', 'path', 'building_yes',
-                'boundary', 'boundary_member', 'water', 'railway', 'power_line',
-                'motorway_construction', 'fence',
-                'inner3', 'forest', 'scrub', 'industrial', 'parkinglot', 'building_no',
-                'rail_landuse', 'landuse_construction', 'retail',
-                'outer', 'inner1', 'inner2'
-            ]);
-        });
 
 
-        it('matches aerialways', function () {
-            features.gatherStats(all, graph, dimensions);
-
-            doMatch('aerialways', [
-                'gondola', 'zip_line'
-            ]);
-
-            dontMatch('aerialways', [
-                'aerialway_platform', 'old_aerialway_station',
-
-                'downhill_piste', 'piste_track_combo',
-                'room', 'indoor_area', 'indoor_bar', 'corridor',
-                'building_part', 'garage1', 'garage2', 'garage3', 'garage4',
-                'building_no', 'point_bar', 'motorway', 'service', 'path', 'building_yes',
-                'boundary', 'boundary_member', 'water', 'railway', 'power_line',
-                'motorway_construction', 'fence',
-                'inner3', 'forest', 'scrub', 'industrial', 'parkinglot', 'building_no',
-                'rail_landuse', 'landuse_construction', 'retail',
-                'outer', 'inner1', 'inner2'
-            ]);
-        });
 
 
         it('matches landuse', function () {
@@ -432,94 +296,22 @@ describe('iD.rendererFeatures', function() {
             dontMatch('landuse', [
                 'point_bar', 'motorway', 'service', 'path', 'building_yes',
                 'boundary', 'boundary_member', 'water', 'railway', 'power_line',
-                'motorway_construction', 'fence',
-                'inner3'   // member of landuse multipolygon, but tagged as highway
-            ]);
-        });
-
-
-        it('matches boundaries', function () {
-            features.gatherStats(all, graph, dimensions);
-
-            doMatch('boundaries', [
-                'boundary',
-                // match ways that are part of boundary relations - #5601
-                'boundary_member', 'boundary_member2',
-                // relations
-                'boundary_relation', 'boundary_relation2'
-            ]);
-
-            dontMatch('boundaries', [
-                'boundary_road',   // because boundary also used as highway - #4973
-                'point_bar', 'motorway', 'service', 'path', 'building_yes',
-                'forest', 'water', 'railway', 'power_line',
                 'motorway_construction', 'fence'
+                // inner3, a highway-tagged member of the landuse multipolygon, used to be listed
+                // here: with no highway rule left it is no longer "interesting", so it inherits
+                // the parent's landuse like the other members.
             ]);
         });
 
 
-        it('matches water', function () {
-            features.gatherStats(all, graph, dimensions);
-
-            doMatch('water', [
-                'point_dock', 'water', 'coastline', 'bay', 'pond',
-                'basin', 'reservoir', 'salt_pond', 'river'
-            ]);
-
-            dontMatch('water', [
-                'point_bar', 'motorway', 'service', 'path', 'building_yes',
-                'forest', 'boundary', 'boundary_member', 'railway', 'power_line',
-                'motorway_construction', 'fence'
-            ]);
-        });
 
 
-        it('matches rail', function () {
-            features.gatherStats(all, graph, dimensions);
-
-            doMatch('rail', [
-                'point_rail_station', 'railway', 'rail_landuse'
-            ]);
-
-            dontMatch('rail', [
-                'rail_streetcar', 'rail_trail',  // because rail also used as highway
-                'point_old_rail_station',
-                'point_bar', 'motorway', 'service', 'path', 'building_yes',
-                'forest', 'boundary', 'boundary_member', 'water', 'power_line',
-                'motorway_construction', 'fence'
-            ]);
-        });
 
 
-        it('matches power', function () {
-            features.gatherStats(all, graph, dimensions);
-
-            doMatch('power', [
-                'point_generator', 'power_line'
-            ]);
-
-            dontMatch('power', [
-                'point_bar', 'motorway', 'service', 'path', 'building_yes',
-                'forest', 'boundary', 'boundary_member', 'water', 'railway',
-                'motorway_construction', 'fence'
-            ]);
-        });
 
 
-        it('matches past/future', function () {
-            features.gatherStats(all, graph, dimensions);
 
-            doMatch('past_future', [
-                'building_construction', 'point_old_rail_station', 'rail_disused',
-                'motorway_construction', 'cycleway_proposed', 'landuse_construction'
-            ]);
 
-            dontMatch('past_future', [
-                'rail_trail',  // because rail also used as highway
-                'point_bar', 'motorway', 'service', 'path', 'building_yes',
-                'forest', 'boundary', 'boundary_member', 'water', 'railway', 'power_line', 'fence'
-            ]);
-        });
 
 
         it('matches others', function () {
@@ -529,10 +321,15 @@ describe('iD.rendererFeatures', function() {
                 'fence', 'pipeline'
             ]);
 
+            // Roads, buildings, water, rail and the rest have no rule of their own any more, so
+            // they are `others` now. Only a point, or something a surviving rule claims, is not.
+            doMatch('others', [
+                'motorway', 'service', 'path', 'building_yes', 'boundary', 'water',
+                'railway', 'power_line', 'motorway_construction'
+            ]);
+
             dontMatch('others', [
-                'point_bar', 'motorway', 'service', 'path', 'building_yes',
-                'forest', 'boundary', 'boundary_member', 'water', 'railway', 'power_line',
-                'motorway_construction', 'retail', 'outer', 'inner1', 'inner2', 'inner3'
+                'point_bar', 'forest', 'retail', 'outer', 'inner1', 'inner2'
             ]);
         });
     });
@@ -547,7 +344,7 @@ describe('iD.rendererFeatures', function() {
             var geometry = a.geometry(graph);
             var all = Object.values(graph.base().entities);
 
-            features.disable('paths');
+            features.disable('others');
             features.gatherStats(all, graph, dimensions);
 
             expect(features.isHiddenChild(a, graph, geometry)).toBe(true);
@@ -560,7 +357,10 @@ describe('iD.rendererFeatures', function() {
             var outer = new iD.osmWay({id: 'outer', tags: {}, version: 1});
             var inner1 = new iD.osmWay({id: 'inner1', tags: {barrier: 'fence'}, version: 1});
             var inner2 = new iD.osmWay({id: 'inner2', version: 1});
-            var inner3 = new iD.osmWay({id: 'inner3', tags: {highway: 'residential'}, version: 1});
+            // Interesting in its own right, which is what #2887 is about. It was a residential
+            // road until the Map Features list was reduced; a locked cadastre way is the kind of
+            // member this register actually has, and the lock rule is what now makes it interesting.
+            var inner3 = new iD.osmWay({id: 'inner3', tags: {'ugr:locked': 'yes'}, version: 1});
             var r = new iD.osmRelation({
                 id: 'r',
                 tags: {type: 'multipolygon', natural: 'wood'},

@@ -14,38 +14,8 @@ export function rendererFeatures(context) {
     const features = {};
     var _deferred = new Set();
 
-    var traffic_roads = {
-        'motorway': true,
-        'motorway_link': true,
-        'trunk': true,
-        'trunk_link': true,
-        'primary': true,
-        'primary_link': true,
-        'secondary': true,
-        'secondary_link': true,
-        'tertiary': true,
-        'tertiary_link': true,
-        'residential': true,
-        'unclassified': true,
-        'living_street': true,
-        'busway': true
-    };
 
-    var service_roads = {
-        'service': true,
-        'road': true,
-        'track': true
-    };
 
-    var paths = {
-        'path': true,
-        'footway': true,
-        'cycleway': true,
-        'bridleway': true,
-        'steps': true,
-        'ladder': true,
-        'pedestrian': true
-    };
 
     var _cullFactor = 1;
     var _cache = {};
@@ -98,32 +68,10 @@ export function rendererFeatures(context) {
         };
     }
 
-    // ugr: locked reference features (cadastre) have their own toggle
-    defineRule('ugr_locked', function isUgrLocked(tags) {
-        return tags['ugr:locked'] === 'yes';
-    });
-
-    defineRule('address_points', (tags, geometry) =>
-        geometry === 'point' && isAddressPoint(tags),
-        100);
-
-    defineRule('points', (tags, geometry) =>
-        geometry === 'point' && !isAddressPoint(tags, geometry),
-        200);
-
-    defineRule('traffic_roads', function isTrafficRoad(tags) {
-        return traffic_roads[tags.highway];
-    });
-
-    defineRule('service_roads', function isServiceRoad(tags) {
-        return service_roads[tags.highway];
-    });
-
-    defineRule('paths', function isPath(tags) {
-        return paths[tags.highway];
-    });
-
-    defineRule('buildings', function isBuilding(tags) {
+    // ugr: these five were filter rules of their own until the Map Features list was reduced to
+    // what this register actually holds. The toggles are gone; the predicates stay, because the
+    // landuse rule below is defined by excluding them and its meaning must not drift.
+    function isBuilding(tags) {
         return (
             (!!tags.building && tags.building !== 'no' && !osmLifecyclePrefixes[tags.building]) ||
             tags.parking === 'multi-storey' ||
@@ -131,18 +79,43 @@ export function rendererFeatures(context) {
             tags.parking === 'carports' ||
             tags.parking === 'garage_boxes'
         );
-    }, 250);
-
-    defineRule('building_parts', function isBuildingPart(tags) {
-        return !!tags['building:part'];
-    });
-
-    defineRule('indoor', function isIndoor(tags) {
+    }
+    function isBuildingPart(tags) { return !!tags['building:part']; }
+    function isIndoor(tags) {
         return (
             (!!tags.indoor && tags.indoor !== 'no') ||
             (!!tags.indoormark && tags.indoormark !== 'no')
         );
+    }
+    function isWater(tags) {
+        return (
+            !!tags.waterway ||
+            tags.natural === 'water' ||
+            tags.natural === 'coastline' ||
+            tags.natural === 'bay' ||
+            tags.landuse === 'pond' ||
+            tags.landuse === 'basin' ||
+            tags.landuse === 'reservoir' ||
+            tags.landuse === 'salt_pond'
+        );
+    }
+    function isPiste(tags) { return tags['piste:type']; }
+
+    // ugr: locked reference features (cadastre) have their own toggle
+    defineRule('ugr_locked', function isUgrLocked(tags) {
+        return tags['ugr:locked'] === 'yes';
     });
+
+
+    defineRule('points', (tags, geometry) =>
+        geometry === 'point' && !isAddressPoint(tags, geometry),
+        200);
+
+
+
+
+
+
 
     defineRule('landuse', function isLanduse(tags, geometry) {
         if (geometry !== 'area') return false;
@@ -154,90 +127,11 @@ export function rendererFeatures(context) {
             }
         }
         return hasLanduseTag &&
-            !_rules.buildings.filter(tags) &&
-            !_rules.building_parts.filter(tags) &&
-            !_rules.indoor.filter(tags) &&
-            !_rules.water.filter(tags) &&
-            !_rules.pistes.filter(tags);
+            !isBuilding(tags) && !isBuildingPart(tags) && !isIndoor(tags) &&
+            !isWater(tags) && !isPiste(tags);
     });
 
-    defineRule('boundaries', function isBoundary(tags, geometry) {
-        // This rule applies if the object has no interesting tags, and if either:
-        //   (a) is a way having a `boundary=*` tag, or
-        //   (b) is a relation of `type=boundary`.
-        return (
-            (geometry === 'line' && !!tags.boundary) ||
-            (geometry === 'relation' && tags.type === 'boundary')
-        ) && !(
-            traffic_roads[tags.highway] ||
-            service_roads[tags.highway] ||
-            paths[tags.highway] ||
-            tags.waterway ||
-            tags.railway ||
-            tags.landuse ||
-            tags.natural ||
-            tags.building ||
-            tags.power
-        );
-    });
 
-    defineRule('water', function isWater(tags) {
-        return (
-            !!tags.waterway ||
-            tags.natural === 'water' ||
-            tags.natural === 'coastline' ||
-            tags.natural === 'bay' ||
-            tags.landuse === 'pond' ||
-            tags.landuse === 'basin' ||
-            tags.landuse === 'reservoir' ||
-            tags.landuse === 'salt_pond'
-        );
-    });
-
-    defineRule('rail', function isRail(tags) {
-        return (
-            !!tags.railway ||
-            tags.landuse === 'railway'
-        ) && !(
-            traffic_roads[tags.highway] ||
-            service_roads[tags.highway] ||
-            paths[tags.highway]
-        ) && !osmLifecyclePrefixes[tags.railway];
-    });
-
-    defineRule('pistes', function isPiste(tags) {
-        return tags['piste:type'];
-    });
-
-    defineRule('aerialways', function isAerialways(tags) {
-        return !!tags?.aerialway &&
-            tags.aerialway !== 'yes' &&
-            tags.aerialway !== 'station';
-    });
-
-    defineRule('power', function isPower(tags) {
-        return !!tags.power;
-    });
-
-    // contains a past/future tag, but not in active use as a road/path/cycleway/etc..
-    defineRule('past_future', function isPastFuture(tags) {
-        if (
-            traffic_roads[tags.highway] ||
-            service_roads[tags.highway] ||
-            paths[tags.highway]
-        ) { return false; }
-
-        const keys = Object.keys(tags);
-
-        for (const key of keys) {
-            if (osmLifecyclePrefixes[tags[key]]) return true; // legacy tagging, e.g. `highway=construction`
-            const parts = key.split(':');
-            if (parts.length === 1) continue;
-            const prefix = parts[0];
-            if (osmLifecyclePrefixes[prefix]) return true; // lifecycle tagging, e.g. `demolished:building=yes`
-        }
-        return false;
-    });
 
     // Lines or areas that don't match another feature filter.
     // IMPORTANT: The 'others' feature must be the last one defined,
