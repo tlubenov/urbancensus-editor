@@ -2425,3 +2425,11 @@ en:
         maybe_swapped: "is outside Bulgaria – x and y may be swapped"
         outside_boundary: is outside the municipality boundary
         blocked_by_rules: "{type} points need attributes a file can't supply, so they couldn't be saved"
+    coords:
+      title: Coordinates
+      lat: Latitude
+      lon: Longitude
+      x: x (BGS2005)
+      y: y (BGS2005)
+      invalid: That is not a position – the point has not moved
+      locked: A cadastre feature cannot be moved
