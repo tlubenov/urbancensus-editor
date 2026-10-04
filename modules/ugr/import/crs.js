@@ -6,6 +6,10 @@ export const UGR_BGS2005 = '+proj=lcc +lat_0=42.6678756833333 +lon_0=25.5 +lat_1
 
 const bgs2005ToWgs84 = proj4(UGR_BGS2005, 'WGS84');
 
+// CCS2005's working range in metres. ugrGuessCrs recognises a BGS2005 pair by these bounds, and the
+// coordinate editor refuses one outside them, so they live here where both can read the same numbers.
+export const UGR_BGS2005_RANGE = { x: [100000, 1000000], y: [4000000, 5000000] };
+
 // Bulgaria's bounding box, slightly generous: west, south, east, north.
 const BULGARIA = [22.3, 41.2, 28.7, 44.3];
 
@@ -24,6 +28,11 @@ export function ugrToWgs84(crs, x, y) {
     return crs === 'bgs2005' ? bgs2005ToWgs84.forward([x, y]) : [x, y];
 }
 
+// x is the easting, y the northing -- the order proj4 returns and the order ugrToWgs84 takes.
+export function ugrFromWgs84(lon, lat) {
+    return bgs2005ToWgs84.inverse([lon, lat]);
+}
+
 export function ugrInBulgaria([lon, lat]) {
     return lon >= BULGARIA[0] && lon <= BULGARIA[2] && lat >= BULGARIA[1] && lat <= BULGARIA[3];
 }
@@ -32,6 +41,7 @@ export function ugrInBulgaria([lon, lat]) {
 export function ugrGuessCrs(pairs) {
     if (!pairs.length) return null;
     if (pairs.every(([x, y]) => Math.abs(x) <= 180 && Math.abs(y) <= 90)) return 'wgs84';
-    if (pairs.every(([x, y]) => x >= 100000 && x <= 1000000 && y >= 4000000 && y <= 5000000)) return 'bgs2005';
+    const { x: [xmin, xmax], y: [ymin, ymax] } = UGR_BGS2005_RANGE;
+    if (pairs.every(([x, y]) => x >= xmin && x <= xmax && y >= ymin && y <= ymax)) return 'bgs2005';
     return null;
 }

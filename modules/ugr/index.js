@@ -12,7 +12,8 @@ export { ugrDisabledValidations, ugrIsOwnRule, ugrRuleKeysFor, ugrValidationDisa
 export { ugrUnknownValue } from './validations/rules';
 export { ugrLockedDeletions } from './validations/locked_modified';
 export { ugrKeptServices, ugrPruneServices } from './removals';
-export { UGR_BGS2005, ugrGuessCrs, ugrInBulgaria, ugrNormalizeCrs, ugrToWgs84 } from './import/crs';
+export { UGR_BGS2005, UGR_BGS2005_RANGE, ugrFromWgs84, ugrGuessCrs, ugrInBulgaria, ugrNormalizeCrs, ugrToWgs84 } from './import/crs';
+export { UGR_DEGREE_PLACES, UGR_METRE_PLACES, ugrCoordsFor, ugrFormatDegrees, ugrFormatMetres, ugrLocFromBgs2005, ugrLocFromDegrees, ugrParseNumber } from './coords/convert';
 export { UGR_REQUIRED_COLUMNS, ugrParsePoints } from './import/parse';
 export { UGR_IMPORT_MAX_BYTES, ugrCheckImport, ugrGuessImportCrs, ugrImportCounts } from './import/check';
 export { ugrActionImportPoints } from './import/action';
