@@ -34,9 +34,12 @@ describe('iD.ugr coordinate conversion', function () {
         expect(iD.ugrParseNumber('')).toBe(null);
         expect(iD.ugrParseNumber('42.1.2')).toBe(null);
         // The regex constrains what Number() accepts
-        expect(iD.ugrParseNumber('1,2,3')).toBe(null);  // only first comma replaced, so '1.2,3' fails regex
+        expect(iD.ugrParseNumber('1,2,3')).toBe(null);  // only first comma replaced, so '1.2,3' is NaN
         expect(iD.ugrParseNumber('0x10')).toBe(null);   // Number accepts hex, but regex rejects it
         expect(iD.ugrParseNumber('1e5')).toBe(null);    // Number accepts scientific notation, regex rejects it
+        // Regex also rejects leading and trailing dots, which Number would accept
+        expect(iD.ugrParseNumber('.5')).toBe(null);
+        expect(iD.ugrParseNumber('42.')).toBe(null);
         // But trimming still works
         expect(iD.ugrParseNumber('  42.5  ')).toBeCloseTo(42.5, 6);
     });
@@ -74,6 +77,16 @@ describe('iD.ugr coordinate conversion', function () {
         // Upper bounds must also be checked
         expect(iD.ugrLocFromBgs2005(1000001, 4731436)).toBe(null);
         expect(iD.ugrLocFromBgs2005(321559, 5000001)).toBe(null);
+        // Exact boundaries are accepted: lower bounds
+        var result = iD.ugrLocFromBgs2005(100000, 4731436);
+        expect(result).not.toBe(null);
+        result = iD.ugrLocFromBgs2005(321559, 4000000);
+        expect(result).not.toBe(null);
+        // Exact boundaries are accepted: upper bounds
+        result = iD.ugrLocFromBgs2005(1000000, 4731436);
+        expect(result).not.toBe(null);
+        result = iD.ugrLocFromBgs2005(321559, 5000000);
+        expect(result).not.toBe(null);
     });
 
     it('converts a BGS2005 pair back to the point it came from', function () {
