@@ -84,6 +84,7 @@ export function ugrSectionCoordinates(context) {
         entered.merge(rows).select('input')
             .attr('disabled', isLocked ? 'disabled' : null)
             .attr('title', isLocked ? t('ugr.coords.locked') : null)
+            .attr('aria-invalid', null)
             .property('value', d => shown[d]);
     }
 
@@ -97,7 +98,10 @@ export function ugrSectionCoordinates(context) {
             input.removeAttribute('aria-invalid');
         } else if (node) {
             input.value = ugrCoordsFor(node.loc)[which];
-            if (!unchanged) {
+            if (unchanged) {
+                input.removeAttribute('title');
+                input.removeAttribute('aria-invalid');
+            } else {
                 input.title = t('ugr.coords.invalid');
                 input.setAttribute('aria-invalid', 'true');
             }
