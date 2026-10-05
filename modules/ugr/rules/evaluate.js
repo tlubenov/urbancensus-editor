@@ -79,7 +79,12 @@ function trimBlanks(value) {
 export function ugrDeclaredKeys(rules) {
     const keys = new Set(rules.common_allowed || []);
     for (const preset of Object.values(rules.presets || {})) {
-        [...(preset.required || []), ...(preset.required_any || []).flat(), ...(preset.allowed || [])].forEach(key => keys.add(key));
+        // read_only keys are declared too: the rules know them, they are simply Django's to change.
+        // Without this, moving a key from `allowed` to `read_only` makes it look backend-owned, and a
+        // feature type with no business carrying it stops being flagged. The register's declared_keys
+        // collects them for the same reason -- the two must agree or the rule-case check fails the build.
+        [...(preset.required || []), ...(preset.required_any || []).flat(), ...(preset.allowed || []),
+            ...(preset.read_only || [])].forEach(key => keys.add(key));
     }
     keys.delete(rules.lock_tag || 'ugr:locked');
     return keys;

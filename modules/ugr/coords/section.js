@@ -64,6 +64,10 @@ export function ugrSectionCoordinates(context) {
         return true;
     };
 
+    // The units each pair is read in: decimal degrees for WGS84, metres for BGS2005. They go in
+    // iD's own `.label-textannotation`, which is the slot it uses for exactly this.
+    const UNITS = { lat: 'dd', lon: 'dd', x: 'm', y: 'm' };
+
     function renderContent(selection) {
         const node = selectedNode();
         if (!node) return;
@@ -73,17 +77,34 @@ export function ugrSectionCoordinates(context) {
         let list = selection.selectAll('.ugr-coords').data([0]);
         list = list.enter().append('div').attr('class', 'ugr-coords').merge(list);
 
-        const rows = list.selectAll('.ugr-coord-row').data(FIELDS, d => d);
-        const entered = rows.enter().append('div').attr('class', 'ugr-coord-row');
-        entered.append('label').attr('for', d => 'ugr-coord-' + d).text(d => t('ugr.coords.' + d));
-        entered.append('input')
+        // iD's own field markup, rather than a shape of our own: the labels, inputs and spacing then
+        // come from the same stylesheet as every other field in the inspector, and the lock
+        // affordance `.ugr-readonly .form-field-input-wrap` applies without a rule of its own.
+        const rows = list.selectAll('.form-field').data(FIELDS, d => d);
+        const entered = rows.enter()
+            .append('div')
+            .attr('class', d => 'form-field form-field-ugr-coord-' + d);
+        const labelEnter = entered.append('label')
+            .attr('class', 'field-label')
+            .attr('for', d => 'ugr-coord-' + d);
+        const textEnter = labelEnter.append('span').attr('class', 'label-text');
+        textEnter.append('span').attr('class', 'label-textvalue').text(d => t('ugr.coords.' + d));
+        textEnter.append('span').attr('class', 'label-textannotation').text(d => UNITS[d]);
+        entered.append('div')
+            .attr('class', 'form-field-input-wrap')
+            .append('input')
             .attr('type', 'text')
             .attr('id', d => 'ugr-coord-' + d)
             .attr('inputmode', 'decimal')
             .on('change', function(d3_event, d) { onSubmit(d, this); })
             .on('blur', function(d3_event, d) { onSubmit(d, this); });
 
-        entered.merge(rows).select('input')
+        const all = entered.merge(rows);
+        // .ugr-readonly goes on the field, not the wrap: the existing rule is a DESCENDANT
+        // selector, `.ugr-readonly .form-field-input-wrap`, and ugrApplyFieldLocks marks the
+        // field for the same reason.
+        all.classed('ugr-readonly', isLocked);
+        all.select('input')
             .attr('disabled', isLocked ? 'disabled' : null)
             .attr('title', isLocked ? t('ugr.coords.locked') : null)
             .attr('aria-invalid', null)

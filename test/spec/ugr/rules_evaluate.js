@@ -213,10 +213,22 @@ describe('iD.ugrEvaluate', function () {
             return feature('point', Object.assign({ natural: 'tree', 'ugr:kind': 'tree', genus: 'Tilia' }, tags), [inside]);
         }
 
-        it('declares the keys of every type\'s required, required_any and allowed, and common_allowed, never the lock tag', function () {
+        it('declares the keys of every type\'s required, required_any, allowed and read_only, and common_allowed, never the lock tag', function () {
+            // ugr:survey_id is read_only in the fixture. It is declared from 2026-10-05: the rules
+            // know a read-only key, it is simply Django's to change, and leaving it out made it look
+            // backend-owned. The register's declared_keys() agrees -- the rule-case check compares
+            // the two and fails the editor build if they drift.
             expect(Array.from(iD.ugrDeclaredKeys(namespaceRules)).sort())
-                .toEqual(['genus', 'note', 'ugr:genus_code', 'ugr:location_type', 'ugr:maintenance_category', 'ugr:note_ref', 'ugr:park_code']);
+                .toEqual(['genus', 'note', 'ugr:genus_code', 'ugr:location_type', 'ugr:maintenance_category', 'ugr:note_ref', 'ugr:park_code', 'ugr:survey_id']);
             expect(Array.from(iD.ugrDeclaredKeys({ presets: {} }))).toEqual([]);
+        });
+
+        it('counts a read-only key as declared, so it is not mistaken for a backend-owned one', function () {
+            // The 2026-10-02 decision moved attributes to Django by making them read_only. If those
+            // keys stopped being declared, a ugr: key would look backend-owned and a feature type
+            // with no business carrying it would stop being flagged for it.
+            var rules = { presets: { 'ugr/park': { tags: { leisure: 'park' }, read_only: ['ugr:maintenance_category'] } } };
+            expect(Array.from(iD.ugrDeclaredKeys(rules))).toContain('ugr:maintenance_category');
         });
 
         it('never flags ugr: keys the rules do not declare, on matched and unmatched features', function () {
