@@ -2433,3 +2433,4 @@ en:
       y: y (BGS2005)
       invalid: That is not a position – the point has not moved
       locked: A cadastre feature cannot be moved
+      tip: Latitude and longitude in decimal degrees; x and y in metres.

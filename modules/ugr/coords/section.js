@@ -89,7 +89,7 @@ export function ugrSectionCoordinates(context) {
             .attr('for', d => 'ugr-coord-' + d);
         const textEnter = labelEnter.append('span').attr('class', 'label-text');
         textEnter.append('span').attr('class', 'label-textvalue').text(d => t('ugr.coords.' + d));
-        textEnter.append('span').attr('class', 'label-textannotation').text(d => UNITS[d]);
+        textEnter.append('span').attr('class', 'label-textannotation').text(d => '(' + UNITS[d] + ')');
         entered.append('div')
             .attr('class', 'form-field-input-wrap')
             .append('input')
@@ -109,6 +109,10 @@ export function ugrSectionCoordinates(context) {
             .attr('title', isLocked ? t('ugr.coords.locked') : null)
             .attr('aria-invalid', null)
             .property('value', d => shown[d]);
+
+        // One line, once, for the whole box: what the four fields are read in.
+        let tip = selection.selectAll('.ugr-coords-tip').data([0]);
+        tip.enter().append('p').attr('class', 'ugr-coords-tip').merge(tip).text(t('ugr.coords.tip'));
     }
 
     // A refusal puts the field back to the point's real value, so the box never shows a position the

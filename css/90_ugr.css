@@ -36,10 +36,15 @@ path.area.fill.tag-ugr-locked {
 
 /* ugr: the coordinate box. It emits iD's own .form-field markup, so the labels, inputs and spacing
    come from 80_app.css like every other field, and a locked feature is greyed by the
-   .ugr-readonly rule above. Only two things are its own: the gap under the last row, and a refused
-   value, which has no equivalent among iD's fields. */
+   .ugr-readonly rule above. Only three things are its own: the gap under the last row, the one-line
+   tip under the rows, and a refused value, which has no equivalent among iD's fields. */
 .ugr-coords {
     padding: 5px 0;
+}
+.ugr-coords-tip {
+    margin: 5px 0 0;
+    font-size: 11px;
+    color: var(--passive-text-color);
 }
 .ugr-coords input[aria-invalid="true"] {
     border-color: var(--error-border-color);
