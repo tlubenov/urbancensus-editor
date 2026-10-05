@@ -38,6 +38,12 @@ describe('iD.ugrSectionCoordinates', function () {
         expect(iD.ugrSectionCoordinates(context).shouldDisplay()()).toBe(false);
     });
 
+    it('does not show for a relation', function () {
+        context.history().merge([new iD.osmRelation({ id: 'r1', members: [{ id: 'n-tree', type: 'node', role: '' }] })]);
+        selecting(['r1']);
+        expect(iD.ugrSectionCoordinates(context).shouldDisplay()()).toBe(false);
+    });
+
     it('does not show for two selected points', function () {
         selecting(['n-a', 'n-b']);
         expect(iD.ugrSectionCoordinates(context).shouldDisplay()()).toBe(false);
@@ -148,6 +154,17 @@ describe('iD.ugrSectionCoordinates', function () {
         var before = context.entity('n-tree').loc;
         var shown = iD.ugrCoordsFor(before).lat;
         expect(section.ugrSubmit('lat', shown)).toBe(false);
+        expect(context.entity('n-tree').loc).toEqual(before);
+        expect(context.history().undoAnnotation()).toBeFalsy();
+    });
+
+    it('treats a comma-typed copy of the displayed value as unchanged', function () {
+        selecting(['n-tree']);
+        var section = iD.ugrSectionCoordinates(context);
+        var before = context.entity('n-tree').loc;
+        var shown = iD.ugrCoordsFor(before).lat;
+        expect(shown).toContain('.');
+        expect(section.ugrSubmit('lat', shown.replace('.', ','))).toBe(false);
         expect(context.entity('n-tree').loc).toEqual(before);
         expect(context.history().undoAnnotation()).toBeFalsy();
     });

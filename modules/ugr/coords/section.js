@@ -50,7 +50,9 @@ export function ugrSectionCoordinates(context) {
         const shown = ugrCoordsFor(node.loc);
         // Tabbing through a field re-submits the rounded display value, which would nudge the
         // point by a few centimetres and add an undo entry for nothing.
-        if (text === shown[which]) return false;
+        // Compared as numbers, not text: a Bulgarian keyboard types a comma, which parses to the
+        // value already shown and must not become a move to the identical location.
+        if (ugrParseNumber(text) === ugrParseNumber(shown[which])) return false;
         const loc = locFor(which, text, shown);
         if (!loc) return false;
         // actionMoveNode is transitionable, and history.perform animates a transitionable action
@@ -92,7 +94,7 @@ export function ugrSectionCoordinates(context) {
     // map does not agree with.
     function onSubmit(which, input) {
         const node = selectedNode();
-        const unchanged = !!node && input.value === ugrCoordsFor(node.loc)[which];
+        const unchanged = !!node && ugrParseNumber(input.value) === ugrParseNumber(ugrCoordsFor(node.loc)[which]);
         const submitted = section.ugrSubmit(which, input.value);
         if (submitted) {
             input.removeAttribute('title');
@@ -103,7 +105,8 @@ export function ugrSectionCoordinates(context) {
                 input.removeAttribute('title');
                 input.removeAttribute('aria-invalid');
             } else {
-                input.title = t('ugr.coords.invalid');
+                // A locked feature refuses a perfectly valid value; "not a position" would mislead.
+                input.title = t(locked() ? 'ugr.coords.locked' : 'ugr.coords.invalid');
                 input.setAttribute('aria-invalid', 'true');
             }
         }

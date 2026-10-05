@@ -33,3 +33,26 @@ path.area.fill.tag-ugr-locked {
 .ugr-import-dialog .hide {
     display: none;
 }
+
+/* ugr: the coordinate box. A grid keeps the four inputs on one left edge whatever the label's
+   length; a locked feature greys the inputs the way .ugr-readonly does, since this section emits no
+   .form-field-input-wrap for that rule to find; a refused value is outlined in the error colour */
+.ugr-coords {
+    padding: 5px 0;
+}
+.ugr-coord-row {
+    display: grid;
+    grid-template-columns: 40% 1fr;
+    align-items: center;
+    column-gap: 10px;
+    margin-bottom: 5px;
+}
+.ugr-coord-row input[disabled] {
+    opacity: 0.7;
+    background-color: var(--bg-color-2);
+    cursor: not-allowed;
+}
+.ugr-coord-row input[aria-invalid="true"] {
+    border-color: var(--error-border-color);
+    background-color: var(--error-bg-color);
+}

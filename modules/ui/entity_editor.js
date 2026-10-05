@@ -12,6 +12,7 @@ import { svgIcon } from '../svg/icon';
 import { utilArrayIdentical } from '../util/array';
 import { utilCleanTags, utilCombinedTags, utilRebind } from '../util';
 
+// ugr: the coordinate section (typed lat/lon and BGS2005 x/y for a standalone point)
 import { ugrSectionCoordinates } from '../ugr/coords/section';
 import { uiSectionEntityIssues } from './sections/entity_issues';
 import { uiSectionFeatureType } from './sections/feature_type';
@@ -31,6 +32,7 @@ export function uiEntityEditor(context) {
     var _activePresets = [];
     var _newFeature;
 
+    // ugr: built lazily, on first use, so ugrSectionIdsForTest below can read the list without a render
     var _sections;
 
     function sections() {
@@ -42,6 +44,7 @@ export function uiEntityEditor(context) {
                 }),
                 uiSectionEntityIssues(context),
                 uiSectionPresetFields(context).on('change', changeTags).on('revert', revertTags),
+                // ugr: after the preset fields, so the coordinates read as one more group of fields
                 ugrSectionCoordinates(context),
                 uiSectionRawTagEditor('raw-tag-editor', context).on('change', changeTags),
                 uiSectionRawMemberEditor(context),
@@ -110,6 +113,7 @@ export function uiEntityEditor(context) {
         body = body
             .merge(bodyEnter);
 
+        // ugr: sections() replaces the upstream eager _sections array; keep the lazy cache on rebase
         sections().forEach(function(section) {
             if (section.entityIDs) {
                 section.entityIDs(_entityIDs);
@@ -293,6 +297,7 @@ export function uiEntityEditor(context) {
     };
 
 
+    // ugr: test-only accessor, no upstream counterpart.
     // The ids of the sections this editor builds, in order. Exists so a test can assert where the
     // coordinate section sits without rendering a sidebar.
     entityEditor.ugrSectionIdsForTest = function() {
